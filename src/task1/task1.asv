@@ -4,10 +4,10 @@ function task1
 
        ImgOut = extractFaces(Img);
        
-       imshow(ImgOut);
+       imshow(ImgOut)
     end
 end
 
 function [Out] = extractFaces(Img) 
-    Out = Img; 
+    Out = Img;
 end
