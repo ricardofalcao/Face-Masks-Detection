@@ -1,6 +1,6 @@
 %% INITIALIZATION PROCEDURE
 % Test image index
-i = 1;
+i = 7;
 
 file_name = sprintf('data/%d.png', i);
 filebb_name = sprintf('data/%d_gt_visualization_do_not_use_for_evaluation.png', i);
