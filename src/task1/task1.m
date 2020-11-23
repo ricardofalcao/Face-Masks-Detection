@@ -9,6 +9,9 @@ function task1
 end
 
 function [Out] = extractFaces(ImgRGB)
+    CE = fspecial('average', 5);
+    ImgRGB = imfilter(ImgRGB, CE);
+
     %Isolate R. 
     R = ImgRGB(:,:,1);
     %Isolate G. 
@@ -41,5 +44,23 @@ function [Out] = extractFaces(ImgRGB)
     MaskHSV = H < (50 / 360) | H > (230 / 360);
     
     Mask = MaskRGB & MaskYCbCr & MaskHSV;
-    Out = im2double(ImgRGB) .* repmat(Mask, [1,1,3]); 
+    
+    [Reg, N] = bwlabel(Mask);
+    Count = zeros(N,2);
+    
+    for i = 1:N
+       Count(i, 1) = i;
+       Count(i, 2) = nnz(Reg == i);
+    end
+    
+    RegAvg = mean(Count(:,2));
+    Mask2 = zeros(size(Mask));
+    
+    for i = 1:N
+       if Count(i, 2) > RegAvg
+           Mask2 = Mask2 | (Reg == i);
+       end
+    end
+    
+    Out = im2double(ImgRGB) .* repmat(Mask2, [1,1,3]); 
 end
