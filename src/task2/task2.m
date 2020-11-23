@@ -1,6 +1,6 @@
 %% INITIALIZATION PROCEDURE
 % Test image index
-i = 7;
+i = 5;
 
 file_name = sprintf('data/%d.png', i);
 filebb_name = sprintf('data/%d_gt_visualization_do_not_use_for_evaluation.png', i);
@@ -16,11 +16,11 @@ subplot(1,2,2), imshow(img_bb, []), title('detected BB')
 gt_data = load('data/ground_truth.mat');
 BB = gt_data.ground_truth_store(i).ground_truth;
 if size(BB,1) == 1
-    img_final = zeros(BB(3)-BB(1),BB(4)-BB(2),3);   
+    img_final = zeros(BB(2)-BB(1),BB(4)-BB(3),3);   
 
     for i = 1:size(img_final,1)    
         for j = 1:size(img_final,2)
-            img_final(i,j,:) = img(i+BB(1), j+BB(2),:);
+            img_final(i,j,:) = img(i+BB(1), j+BB(3),:);
         end
     end
 end
