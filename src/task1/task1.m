@@ -1,11 +1,52 @@
 function task1
     for i = 1:1
-       Img = imread(sprintf('data/%d.png', i));
-
+       Img = imread(sprintf('data/%d.png', 1));
+       
        ImgOut = extractFaces(Img);
        
        imshow(ImgOut)
     end
+   
+    %% Alternativa 1
+    
+    figure, imshow(Img);
+    
+%    figure;
+   ImgOut = im2double(ImgOut);
+%    subplot(1,2,1), imshow(Img), title('Original');
+   
+   Img_grey = rgb2gray(ImgOut);
+%    subplot(1,2,2), imshow(Img_grey), title('Grey');
+   
+%    figure;
+   sobel_y = imfilter(Img_grey, fspecial('sobel')); % sobel na vertical
+%    subplot(1,2,1), imshow(sobel_y, []), title('sobel vertical');
+
+   sobel_x = imfilter(Img_grey, fspecial('sobel')'); % sobel na horizontal
+%    subplot(1,2,2), imshow(sobel_x, []), title('sobel horizontal');
+
+   Img_sobel = sqrt(sobel_y.^2 + sobel_x.^2); % fazer magnitude
+%    figure, imshow(Img_sobel, []), title('sobel magnitude');
+   
+   Img_sobel(Img_sobel<0.1)=0; % põe a 0 o ruído
+   
+   level = multithresh(Img_sobel, 1);
+   Img_thresh = imquantize(Img_sobel, level);
+   
+%    figure, imshow(Img_thresh, []), title('thresh');
+   
+   Img_ovl = imoverlay(im2double(Img), boundarymask(Img_thresh));
+   figure, imshow(Img_ovl, []), title('overlay');
+   
+   
+   %% Alternativa 2   
+   level1 = multithresh(Img_grey, 1);
+   img1 = edge(Img_grey, 'Canny', level1);
+%    figure, imshow(img1, []), title('Edges com Canny');
+   
+   Img_ovl = imoverlay(im2double(Img), boundarymask(img1));
+   figure, imshow(Img_ovl, []), title('overlay');
+
 end
 
 function [Out] = extractFaces(ImgRGB)
