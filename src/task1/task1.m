@@ -1,6 +1,6 @@
 function task1
     for i = 1:1
-       Img = imread(sprintf('data/%d.png', 1));
+       Img = imread(sprintf('data/%d.png', 3));
        
        ImgOut = extractFaces(Img);
        
