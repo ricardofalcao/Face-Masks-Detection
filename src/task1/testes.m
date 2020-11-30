@@ -1,6 +1,6 @@
 for i = 1:1
-       Img = imread(sprintf('data/%d.png', 4));
-              
+       Img = imread(sprintf('data/%d.png', 9));
+             
        figure, imshow(Img, 'InitialMagnification', 'fit'), title('Original');
 end
 
@@ -114,4 +114,14 @@ figure, imshow(Out, [], 'InitialMagnification', 'fit'), title('Pele');
 %% Teste 4 - Bounding Box
 
 Img_grey = rgb2gray(Out);
-figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
+% figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
+
+[r,c] = size(Img_grey);
+labeledImage = bwlabel(Img_grey(1:(2*r/3), 1:c), 4);
+props = regionprops(labeledImage, 'BoundingBox');
+boundingBox = props.BoundingBox;
+figure, imshow(Img, 'InitialMagnification', 'fit'), title('Bounding Box');
+hold on;
+rectangle('Position', boundingBox, 'EdgeColor', 'r');
+
+

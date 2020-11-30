@@ -24,9 +24,15 @@ Output(:,:,3) = newB;
 
 figure, imshow(Output, [], 'InitialMagnification', 'fit'), title('Image after Color balance');
 
-Img_gray = rgb2gray(Output);
+ImgYCbCr = rgb2ycbcr(ImgRGB);
+    
+Y = ImgYCbCr(:,:,1);
+Cb = ImgYCbCr(:,:,2);
+Cr = ImgYCbCr(:,:,3);
 
-figure, imshow(Img_gray, [], 'InitialMagnification', 'fit'), title('Gray');
+% Img_gray = rgb2gray(Output);
+% 
+% figure, imshow(Img_gray, [], 'InitialMagnification', 'fit'), title('Gray');
 
 % Z = imabsdiff(ImgRGB, Output);
 % figure, imshow(Z, [], 'InitialMagnification', 'fit'), title('Diference');
@@ -35,9 +41,9 @@ figure, imshow(Img_gray, [], 'InitialMagnification', 'fit'), title('Gray');
 % Img_gray = imopen(Img_gray, strel('disk', 5));
 % figure, imshow(Img_gray, 'InitialMagnification', 'fit'), title('Gray + Open');
 
-BW = imbinarize(Img_gray,'global');
+% BW = imbinarize(Img_gray,'global');
 % BW = imbinarize(Img_gray,'adaptive','ForegroundPolarity','dark');
-figure, imshow(BW, [], 'InitialMagnification', 'fit'), title('Binarization with Global Threshold');
+% figure, imshow(BW, [], 'InitialMagnification', 'fit'), title('Binarization with Global Threshold');
 
 % BW_original = imbinarize(rgb2gray(ImgRGB),'global');
 % figure, imshow(BW_original, [], 'InitialMagnification', 'fit'), title('Original -> Binarization with Global Threshold');
