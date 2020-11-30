@@ -98,7 +98,7 @@ figure, imshow(Out, [], 'InitialMagnification', 'fit'), title('Pele');
 
 %% Teste 3 - Edges
 
-Img_grey = rgb2gray(Out);
+% Img_grey = rgb2gray(Out);
 % figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Gray');
 
 % Img_grey = imclose(Img_grey, strel('disk', 12));
@@ -107,8 +107,11 @@ Img_grey = rgb2gray(Out);
 % level = multithresh(Img_grey, 1);
 % img1 = edge(Img_grey, 'Canny', level);
 
-Img_ovl = imoverlay(im2double(Img), boundarymask(Img_grey==0));
+% Img_ovl = imoverlay(im2double(Img), boundarymask(Img_grey==0));
 % figure, imshow(Img_ovl, [], 'InitialMagnification', 'fit'), title('Overlay');
 
 
+%% Teste 4 - Bounding Box
 
+Img_grey = rgb2gray(Out);
+figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
