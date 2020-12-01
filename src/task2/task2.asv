@@ -1,6 +1,6 @@
 %% INITIALIZATION PROCEDURE
 % Test image index
-i = 8;
+i = 1;
 
 file_name = sprintf('data/%d.png', i);
 filebb_name = sprintf('data/%d_gt_visualization_do_not_use_for_evaluation.png', i);
@@ -56,20 +56,10 @@ subplot(2,2,4), imshow(quantPlane(:,:,3)), title('RGB Color Segmentation')
 
 %% RGB to YCrCb
 ImgYCbCr = rgb2ycbcr(img_final);
-
-% threshold
-img_test = imbinarize(ImgYCbCr(:,:,1), 'global');
-figure(4); clf(4);
 subplot(2,2,1), imshow(ImgYCbCr), title('YCrCb')
 subplot(2,2,2), imshow(ImgYCbCr(:,:,1), []), title('Y')
 subplot(2,2,3), imshow(ImgYCbCr(:,:,2), []), title('Cr')
 subplot(2,2,4), imshow(ImgYCbCr(:,:,3), []), title('Cb')
-
-% img_test = imopen(img_test, strel('disk', 3));
-
-figure(10); clf(10);
-subplot(2,1,1), imshow(ImgYCbCr), title('YCrCb')
-subplot(2,1,2), imshow(img_test), title('thresh')
 
 
 
