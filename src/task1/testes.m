@@ -1,5 +1,5 @@
 for i = 1:1
-       Img = imread(sprintf('data/%d.png', 9));
+       Img = imread(sprintf('data/%d.png', 2));
              
        figure, imshow(Img, 'InitialMagnification', 'fit'), title('Original');
 end
@@ -115,10 +115,13 @@ figure, imshow(Out, [], 'InitialMagnification', 'fit'), title('Pele');
 Img_grey = rgb2gray(Out);
 figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Gray');
 
+% Img_grey = imclose(Img_grey, strel('disk', 5));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Close Disk 10');
+
 Img_filled = imfill(Img_grey, 'holes');
 figure, imshow(Img_filled, 'InitialMagnification', 'fit'), title('Filled');
 
-% Img_grey = imerode(Img_grey, strel('disk', 5));
+% Img_grey = imerode(Img_grey, strel('disk', 10));
 % figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Erosion Disk 5');
 
 % Img_grey = imclose(Img_grey, strel('disk', 10));
@@ -126,6 +129,15 @@ figure, imshow(Img_filled, 'InitialMagnification', 'fit'), title('Filled');
 % 
 % Img_grey = imopen(Img_grey, strel('disk', 15));
 % figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('(after Close)Open Disk 15');
+
+% [r,c] = size(Img_filled);
+% labeledImage = bwlabel(Img_filled(1:(2*r/3), 1:c), 4);
+% props = regionprops(labeledImage, 'Eccentricity');
+% boundingBox = props.Eccentricity;
+% figure, imshow(Img, 'InitialMagnification', 'fit'), title('Bounding Box');
+% hold on;
+% % rectangle('Position', boundingBox, 'EdgeColor', 'r');
+% h = imellipse(hparent, boundingBox)
 
 
 
@@ -163,6 +175,8 @@ P = bwlabel(Img_grey(1:(2*r/3), 1:c), 4);
 % P = bwlabel(Img_grey);
 
 st = regionprops(P, 'BoundingBox'); % Measure properties of image regions
+
+% figure, imshow(P, 'InitialMagnification', 'fit'), title('P');
 
 figure, imshow(Img, 'InitialMagnification', 'fit'), title('Bounding Box');
 hold on;

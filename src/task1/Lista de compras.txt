@@ -1,0 +1,7 @@
+1) BwDist powerpoint (Silva)
+
+2) Deteção de elipse (Ricardo)
+
+3) Exprimentar K-Means
+
+4) Fazer uma função para Bounding Boxs
