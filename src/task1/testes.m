@@ -1,5 +1,5 @@
 for i = 1:1
-       Img = imread(sprintf('data/%d.png', 7));
+       Img = imread(sprintf('data/%d.png', 9));
              
        figure, imshow(Img, 'InitialMagnification', 'fit'), title('Original');
 end
@@ -110,8 +110,27 @@ figure, imshow(Out, [], 'InitialMagnification', 'fit'), title('Pele');
 % Img_ovl = imoverlay(im2double(Img), boundarymask(Img_grey==0));
 % figure, imshow(Img_ovl, [], 'InitialMagnification', 'fit'), title('Overlay');
 
+%% Teste 4 - Pós Processamento
 
-%% Teste 4 - Uma Bounding Box
+Img_grey = rgb2gray(Out);
+figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Gray');
+
+Img_filled = imfill(Img_grey, 'holes');
+figure, imshow(Img_filled, 'InitialMagnification', 'fit'), title('Filled');
+
+% Img_grey = imerode(Img_grey, strel('disk', 5));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Erosion Disk 5');
+
+% Img_grey = imclose(Img_grey, strel('disk', 10));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Close Disk 10');
+% 
+% Img_grey = imopen(Img_grey, strel('disk', 15));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('(after Close)Open Disk 15');
+
+
+
+
+%% Teste 5 - Uma Bounding Box
 
 % Img_grey = rgb2gray(Out);
 % % figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
@@ -124,19 +143,19 @@ figure, imshow(Out, [], 'InitialMagnification', 'fit'), title('Pele');
 % hold on;
 % rectangle('Position', boundingBox, 'EdgeColor', 'r');
 
-%% Teste 5 - Múltiplas Bounding Boxs
+%% Teste 6 - Múltiplas Bounding Boxs
 
-Img_grey = rgb2gray(Out);
+% Img_grey = rgb2gray(Out);
 % figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
 
 % Img_grey = imerode(Img_grey, strel('disk', 5));
 % figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Erosion Disk 5');
 
-Img_grey = imclose(Img_grey, strel('disk', 10));
-figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Close Disk 10');
-
-Img_grey = imopen(Img_grey, strel('disk', 15));
-figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('(after Close)Open Disk 15');
+% Img_grey = imclose(Img_grey, strel('disk', 10));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Close Disk 10');
+% 
+% Img_grey = imopen(Img_grey, strel('disk', 15));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('(after Close)Open Disk 15');
 
 [r,c] = size(Img_grey);
 P = bwlabel(Img_grey(1:(2*r/3), 1:c), 4);

@@ -9,7 +9,7 @@ function task1
    
     %% Alternativa 1
     
-    figure, imshow(ImgOut);
+    figure, imshow(ImgOu);
     
 %    figure;
    ImgOut = im2double(ImgOut);
