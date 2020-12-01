@@ -140,9 +140,24 @@ figure, imshow(Img_filled, 'InitialMagnification', 'fit'), title('Filled');
 % h = imellipse(hparent, boundingBox)
 
 
+%% Teste 5 - Transformada de Distância
 
+Img_bw = imbinarize(Img_filled, 'global');
+figure, imshow(Img_bw, [], 'InitialMagnification', 'fit'), title('Binarized');
 
-%% Teste 5 - Uma Bounding Box
+D = bwdist(~Img_bw); % distance between pixel and the nearest zero pixel
+figure, imshow(D, [], 'InitialMagnification', 'fit'), title('Distance transform of ~bw');
+
+D = -D;
+% figure, imshow(D, [], 'InitialMagnification', 'fit'), title('-D');
+D(~Img_bw) = -Inf;
+% figure, imshow(D, [], 'InitialMagnification', 'fit'), title('D(~Img_bw) = -Inf');
+
+L = watershed(D);
+% rgb = label2rgb(L, 'jet', [.5 .5 .5]);
+figure, imshow(L, [], 'InitialMagnification', 'fit'), title('Watershed transform of D');
+
+%% Teste 6 - Uma Bounding Box
 
 % Img_grey = rgb2gray(Out);
 % % figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
@@ -155,7 +170,7 @@ figure, imshow(Img_filled, 'InitialMagnification', 'fit'), title('Filled');
 % hold on;
 % rectangle('Position', boundingBox, 'EdgeColor', 'r');
 
-%% Teste 6 - Múltiplas Bounding Boxs
+%% Teste 7 - Múltiplas Bounding Boxs
 
 % Img_grey = rgb2gray(Out);
 % figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
