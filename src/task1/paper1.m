@@ -6,6 +6,10 @@ end
 
 ImgRGB = im2double(Img);
 
+% sigma = 2;
+% ImgRGB = imgaussfilt3(ImgRGB, sigma); % filters 3-D image A with a 3-D Gaussian smoothing kernel with standard deviation specified by sigma.
+% figure, imshow(ImgRGB, [], 'InitialMagnification', 'fit'), title('Image after 3D Gaussian');
+
 R = ImgRGB(:,:,1);
 G = ImgRGB(:,:,2);
 B = ImgRGB(:,:,3);

@@ -1,5 +1,5 @@
 for i = 1:1
-       Img = imread(sprintf('data/%d.png', 9));
+       Img = imread(sprintf('data/%d.png', 7));
              
        figure, imshow(Img, 'InitialMagnification', 'fit'), title('Original');
 end
@@ -111,17 +111,43 @@ figure, imshow(Out, [], 'InitialMagnification', 'fit'), title('Pele');
 % figure, imshow(Img_ovl, [], 'InitialMagnification', 'fit'), title('Overlay');
 
 
-%% Teste 4 - Bounding Box
+%% Teste 4 - Uma Bounding Box
+
+% Img_grey = rgb2gray(Out);
+% % figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
+% 
+% [r,c] = size(Img_grey);
+% labeledImage = bwlabel(Img_grey(1:(2*r/3), 1:c), 4);
+% props = regionprops(labeledImage, 'BoundingBox');
+% boundingBox = props.BoundingBox;
+% figure, imshow(Img, 'InitialMagnification', 'fit'), title('Bounding Box');
+% hold on;
+% rectangle('Position', boundingBox, 'EdgeColor', 'r');
+
+%% Teste 5 - Múltiplas Bounding Boxs
 
 Img_grey = rgb2gray(Out);
 % figure, imshow(imbinarize(Img_grey, 'global'), 'InitialMagnification', 'fit'), title('Binary');
 
+% Img_grey = imerode(Img_grey, strel('disk', 5));
+% figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Erosion Disk 5');
+
+Img_grey = imclose(Img_grey, strel('disk', 10));
+figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('Close Disk 10');
+
+Img_grey = imopen(Img_grey, strel('disk', 15));
+figure, imshow(Img_grey, 'InitialMagnification', 'fit'), title('(after Close)Open Disk 15');
+
 [r,c] = size(Img_grey);
-labeledImage = bwlabel(Img_grey(1:(2*r/3), 1:c), 4);
-props = regionprops(labeledImage, 'BoundingBox');
-boundingBox = props.BoundingBox;
+P = bwlabel(Img_grey(1:(2*r/3), 1:c), 4);
+
+% P = bwlabel(Img_grey);
+
+st = regionprops(P, 'BoundingBox'); % Measure properties of image regions
+
 figure, imshow(Img, 'InitialMagnification', 'fit'), title('Bounding Box');
 hold on;
-rectangle('Position', boundingBox, 'EdgeColor', 'r');
-
-
+for k = 1 : length(st)
+    thisBB = st(k).BoundingBox;
+    rectangle('Position', thisBB, 'FaceColor', [1 0 0 0.5], 'EdgeColor', 'red', 'LineWidth', 1);
+end
