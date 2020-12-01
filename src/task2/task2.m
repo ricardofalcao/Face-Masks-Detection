@@ -1,6 +1,6 @@
 %% INITIALIZATION PROCEDURE
 % Test image index
-i = 5;
+i = 7;
 
 file_name = sprintf('data/%d.png', i);
 filebb_name = sprintf('data/%d_gt_visualization_do_not_use_for_evaluation.png', i);
@@ -54,6 +54,14 @@ subplot(2,2,2), imshow(quantPlane(:,:,1)), title('RGB Color Segmentation')
 subplot(2,2,3), imshow(quantPlane(:,:,2)), title('RGB Color Segmentation')
 subplot(2,2,4), imshow(quantPlane(:,:,3)), title('RGB Color Segmentation')
 
+%% RGB to YCrCb
+ImgYCbCr = rgb2ycbcr(img_final);
+subplot(2,2,1), imshow(ImgYCbCr), title('YCrCb')
+subplot(2,2,2), imshow(ImgYCbCr(:,:,1), []), title('Y')
+subplot(2,2,3), imshow(ImgYCbCr(:,:,2), []), title('Cr')
+subplot(2,2,4), imshow(ImgYCbCr(:,:,3), []), title('Cb')
+
+    
 %% Superpixel + Kmeans
 % number of clusters
 n = 200;
