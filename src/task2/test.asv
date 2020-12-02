@@ -1,19 +1,44 @@
 function test
     
-    img = findFace(7);
+    img = findFace(2);
     skin_thresh = extractFaces(img);
-    img_ycrcb = rgb2ycbcr(img);
+    img_ycbcr = rgb2ycbcr(img);
     
-    img_ycrcb = imbinarize(img_ycrcb(:,:,1), 'global');
-    img_ycrcb_y = imopen(img_ycrcb_y, strel('disk', 3));
+    img_ycbcr_thresh = imbinarize(img_ycbcr(:,:,1), 'global');
+%     img_ycbcr_thresh = imopen(img_ycbcr_thresh, strel('disk', 3));
     
-    
+    % YCrCb + Y threshold
     figure(1); clf(1);
     subplot(2,2,1), imshow(img), title('original')
     subplot(2,2,2), imshow(skin_thresh) , title('skin_thresh')
-    subplot(2,2,3), imshow(img_ycrcb) , title('YCrCb')
-    subplot(2,2,4), imshow(img_ycrcb_y), title('YCrCb thresh')
-
+    subplot(2,2,3), imshow(img_ycbcr) , title('YCrCb')
+    subplot(2,2,4), imshow(img_ycbcr_thresh), title('YCrCb thresh')
+    
+    
+    % Hough Transform - not very effective    
+    figure(2); clf(2);
+    subplot(2,1,1), imshow(img), title('original')
+    subplot(2,1,2), imshow(img), title('Hough Transform Circles')
+    [centers, radius] = imfindcircles(img, [10 100]);
+    viscircles(centers(:,:), radius(:),'EdgeColor','b');
+    
+    % Edge detection + Hough Transform
+    edges = edge(rgb2gray(img), 'canny');
+    
+    figure(3); clf(3);
+    subplot(2,1,1), imshow(img), title('original')
+    subplot(2,1,2), imshow(edges), title('edges')
+    [centers, radius] = imfindcircles(edges, [10 50]);
+    viscircles(centers(:,:), radius(:),'EdgeColor','b');
+    
+    % Convex hull
+    ch_objects = bwconvhull(img_ycbcr_thresh, 'objects');
+    figure(4); clf(4);
+    subplot(1,3,1), imshow(img), title('original')
+    subplot(1,3,2), imshow(img_ycbcr_thresh), title('YCrCb thresh')
+    subplot(1,3,3), imshow(ch_objects), title('Added Convex Hull')
+    
+    hsuMethod(img);
 end
 
 function [Out] = extractFaces(ImgRGB)
@@ -98,10 +123,34 @@ function [Out] = findFace(i)
     Out = img_final;
 end
 
-function [Out] = RGB2YCrCb(img)
+function [Out] = hsuMethod(img_rgb)    
     
-    ImgYCbCr = rgb2ycbcr(img);
+    close all;
+    img_ycbcr = im2double(rgb2ycbcr(img_rgb));
     
-    Out = ImgYCbCr;
-
+    cb_square = img_ycbcr(:,:,2).^2;
+    cr_square = img_ycbcr(:,:,3).^2;
+    cr_c_square = 255 - cr_square;
+    cb_cr_div = img_ycbcr(:,:,2)./img_ycbcr(:,:,3);
+       
+    eye_map_c = 1/3 * (cb_square + cr_c_square + cb_cr_div);
+    
+    figure;
+    subplot(2,2,1), imshow(img_rgb), title('input')
+    subplot(2,2,2), imshow(cb_square, []), title('Cb^2')
+    subplot(2,2,3), imshow(cr_c_square, []), title('~Cr^2')
+    subplot(2,2,4), imshow(eye_map_c, []), title('output')
+    
+    y_original = img_ycbcr(:,:,1);
+    y_dilated = imdilate(y_original, strel('disk', 3));
+    y_eroded = imerode(y_original, strel('erode', 3));
+    
+    eye_map_y = y_dilated ./ ( y_eroded + 1 );
+    
+    figure;
+    subplot(1,3,1), imshow(img_rgb), title('input')
+    subplot(2,3,2), imshow(cb_square, []), title('y')
+    subplot(2,3,4), imshow(eye_map_y, []), title('output');
+    
+    out = eye_map_c;
 end
