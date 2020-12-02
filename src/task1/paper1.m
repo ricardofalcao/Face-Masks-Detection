@@ -1,5 +1,5 @@
 for i = 1:1
-       Img = imread(sprintf('data/%d.png', 1));
+       Img = imread(sprintf('data/%d.png', 4));
               
        figure, imshow(Img, 'InitialMagnification', 'fit'), title('Original');
 end
