@@ -1,6 +1,21 @@
+% function test
+% 
+%     global i 
+%     
+%     for i = 1:10
+%         if i==3 
+%             continue
+%         end
+%         iterate();
+%     end
+% 
+% end
+
 function test
+    global i
     
-    img = findFace(6);
+    i = 6; 
+    img = findFace(i);
     skin_thresh = extractFaces(img);
     img_ycbcr = rgb2ycbcr(img);
     
@@ -8,44 +23,29 @@ function test
 %     img_ycbcr_thresh = imopen(img_ycbcr_thresh, strel('disk', 3));
     
     % YCrCb + Y threshold
-    figure(1); clf(1);
-    subplot(2,2,1), imshow(img), title('original')
-    subplot(2,2,2), imshow(skin_thresh) , title('skin_thresh')
-    subplot(2,2,3), imshow(img_ycbcr) , title('YCrCb')
-    subplot(2,2,4), imshow(img_ycbcr_thresh), title('YCrCb thresh')
-    
-    
-    % Hough Transform - not very effective    
-    figure(2); clf(2);
-    subplot(2,1,1), imshow(img), title('original')
-    subplot(2,1,2), imshow(img), title('Hough Transform Circles')
-    [centers, radius] = imfindcircles(img, [10 70]);
-    viscircles(centers(:,:), radius(:),'EdgeColor','b');
-    
-    % Edge detection + Hough Transform
-    edges = edge(rgb2gray(img), 'canny');
-    
-    figure(3); clf(3);
-    subplot(2,1,1), imshow(img), title('original')
-    subplot(2,1,2), imshow(edges), title('edges')
-    [centers, radius] = imfindcircles(edges, [10 50]);
-    viscircles(centers(:,:), radius(:),'EdgeColor','b');
-    
+%     figure(1); clf(1);
+%     subplot(2,2,1), imshow(img), title('original')
+%     subplot(2,2,2), imshow(skin_thresh, []) , title('skin_thresh')
+%     subplot(2,2,3), imshow(img_ycbcr) , title('YCrCb')
+%     subplot(2,2,4), imshow(img_ycbcr_thresh), title('YCrCb thresh')
+       
     % Convex hull
     ch_objects = bwconvhull(img_ycbcr_thresh, 'objects');
-    figure(4); clf(4);
-    subplot(1,3,1), imshow(img), title('original')
-    subplot(1,3,2), imshow(img_ycbcr_thresh), title('YCrCb thresh')
-    subplot(1,3,3), imshow(ch_objects), title('Added Convex Hull')
+%     figure(2); clf(2);
+%     subplot(1,3,1), imshow(img), title('original')
+%     subplot(1,3,2), imshow(img_ycbcr_thresh), title('YCrCb thresh')
+%     subplot(1,3,3), imshow(ch_objects), title('Added Convex Hull')
     
     % Hsu Paper Method
     eyes = hsuEyesMethod(img, ch_objects);
     lips = hsuLipsMethod(img, ch_objects);
     
-    figure;
-    subplot(1,3,1), imshow(img), title('original')
-    subplot(1,3,2), imshow(eyes, []), title('eyes')
-    subplot(1,3,3), imshow(lips, []), title('lips')
+%     figure(3); clf(3);
+%     subplot(1,3,1), imshow(img), title('original')
+%     subplot(1,3,2), imshow(eyes, []), title('eyes')
+%     subplot(1,3,3), imshow(lips, []), title('lips')
+    
+    detect_lips(lips);
     
 end
 
@@ -133,7 +133,6 @@ end
 
 function [Out] = hsuEyesMethod(img_rgb, convex_hull)    
     
-    close all;
     img_ycbcr = im2double(rgb2ycbcr(img_rgb));
     
     % Chromo map
@@ -157,12 +156,12 @@ function [Out] = hsuEyesMethod(img_rgb, convex_hull)
     Out = Out .* convex_hull; % Mask to only output the face ROI
     
     % Debug
-    figure;
-    subplot(2,2,1), imshow(img_rgb), title('Input Image')
-    subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
-    subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
-    subplot(2,2,4), imshow(Out, []), title('Output Image')
-    imshow(Out, []), title('final')
+%     figure;
+%     subplot(2,2,1), imshow(img_rgb), title('Input Image')
+%     subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
+%     subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
+%     subplot(2,2,4), imshow(Out, []), title('Output Image')
+%     imshow(Out, []), title('final')
 end
 
 function [Out] = hsuLipsMethod(img_rgb, convex_hull)
@@ -195,10 +194,40 @@ function [Out] = hsuLipsMethod(img_rgb, convex_hull)
     Out = Out .* convex_hull;
     
     % Debug
-    figure;
-    subplot(2,2,1), imshow(img_rgb), title('Input Image')
-    subplot(2,2,2), imshow(cr_cb_div, []), title('Cr/Cb')
-    subplot(2,2,3), imshow(cr_square, []), title('Cr^2')
-    subplot(2,2,4), imshow(Out, []), title('Output Image')
+%     figure;
+%     subplot(2,2,1), imshow(img_rgb), title('Input Image')
+%     subplot(2,2,2), imshow(cr_cb_div, []), title('Cr/Cb')
+%     subplot(2,2,3), imshow(cr_square, []), title('Cr^2')
+%     subplot(2,2,4), imshow(Out, []), title('Output Image')
+
+end
+
+function detect_lips(img)
+        
+    global i;
+    
+    img = im2double(img);
+    half = img(size(img, 1)/2 : end,:);
+    adj = imadjust(half, [0 max(max(half))], [0.0 1.0]);
+    thresh = imquantize(adj, 0.65);
+    thresh = imclose(thresh, strel('disk', 3));
+        
+    figure(i);
+    subplot(2,2,1), imshow(img, []), title('original')
+    subplot(2,2,2), imshow(half, []), title('bottom half')
+    subplot(2,2,3), imshow(thresh, []), title('thresh 50%')
+    subplot(2,2,4), imshow(label2rgb(bwlabel(thresh))), title('regions')
+    
+    thresh_stats = regionprops(logical(bwlabel(thresh)), 'all')
+    
+    viscircles(thresh_stats.Centroid, 0.1);
+    
+    if size(thresh_stats.Centroid, 1) == 1
+        if thresh_stats.Orientation < 70 && thresh_stats.Orientation > -70
+            fprintf('Img %d : Lips\n', i);
+        end
+    elseif size(thresh_stats.Centroid, 1) > 1
+        fprintf('Img %d : No Lips\n', i);
+    end
     
 end

@@ -4,7 +4,7 @@ function task1
        
        ImgOut = extractFaces(Img);
        
-       imshow(ImgOut)
+       imshow(ImgOut), title('out')
     end
    
     %% Alternativa 1
