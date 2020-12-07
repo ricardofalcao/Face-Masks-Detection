@@ -10,7 +10,7 @@ function Out = purgesmallregions(BW)
     Out = zeros(size(BW));
 
     for i = 1:N
-       if Area(i) > RegAvg
+       if Area(i) >= RegAvg
            Zone = (Reg == i);
            Out = Out | Zone;
        end
