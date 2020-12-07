@@ -148,14 +148,24 @@ figure, imshow(Img_bw, [], 'InitialMagnification', 'fit'), title('Binarized');
 D = bwdist(~Img_bw); % distance between pixel and the nearest zero pixel
 figure, imshow(D, [], 'InitialMagnification', 'fit'), title('Distance transform of ~bw');
 
-D = -D;
+
+f = D;
+S = f >= max(D(:)); % initial seed with highest intensity (largest distance to the background = centers of the image)
+T = 10; %  threshold value
+
+[g, NR, SI, TI] = regiongrow(f, S, T);
+
+figure, imshow(g, [], 'InitialMagnification', 'fit'), title('Region Growing');
+
+
+% D = -D;
 % figure, imshow(D, [], 'InitialMagnification', 'fit'), title('-D');
-D(~Img_bw) = -Inf;
+% D(~Img_bw) = -Inf;
 % figure, imshow(D, [], 'InitialMagnification', 'fit'), title('D(~Img_bw) = -Inf');
 
-L = watershed(D);
+% L = watershed(D);
 % rgb = label2rgb(L, 'jet', [.5 .5 .5]);
-figure, imshow(L, [], 'InitialMagnification', 'fit'), title('Watershed transform of D');
+% figure, imshow(L, [], 'InitialMagnification', 'fit'), title('Watershed transform of D');
 
 %% Teste 6 - Uma Bounding Box
 
