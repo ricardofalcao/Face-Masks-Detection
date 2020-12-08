@@ -180,9 +180,10 @@ for k = 1 : N
         
         figure, imshow(BB_BW, [], 'InitialMagnification', 'fit'), title('BB_BW');
         
-        face = (L==k) & BB_BW;
+        new = (L==k) & BB_BW;
         
-        figure, imshow(face, [], 'InitialMagnification', 'fit'), title('new');        
+        figure, imshow(new, [], 'InitialMagnification', 'fit'), title('BB_BW');
+        
         
         
     end
