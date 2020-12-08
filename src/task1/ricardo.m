@@ -105,7 +105,9 @@ subplot(2,3,1), imshow(aux, [], 'InitialMagnification', 'fit'), title('aux');
 
 f = aux;
 S = f >= max(aux(:)); % initial seed with highest intensity (largest distance to the background = centers of the image)
+% S = f >= (max(aux(:))/1.9);
 T = max(aux(:))/1.6; %  threshold value
+% T = max(aux(:))/1.9;
 
 [g, NR, SI, TI] = regiongrow(f, S, T);
 
@@ -116,7 +118,6 @@ subplot(2,3,3), imshow(g, [], 'InitialMagnification', 'fit'), title('open');
 
 g = purgesmallregions(g);
 subplot(2,3,4), imshow(g, [], 'InitialMagnification', 'fit'), title('purge small regions');
-
 
 L = bwlabel(g);
 subplot(2,3,5), imshow(L, [], 'InitialMagnification', 'fit'), title('labeled');
@@ -130,9 +131,13 @@ hold on;
 for k = 1 : size(box)
     
     ecc = regionprops((L == k), 'Eccentricity');
+    max = regionprops((L == k), 'MajorAxisLength');
+    min = regionprops((L == k), 'MinorAxisLength');
     
-    if ecc.Eccentricity > 0.7
+    if (ecc.Eccentricity > 0.7) && (max.MajorAxisLength < 2 * min.MinorAxisLength)
+        
         rectangle('Position', box(k).BoundingBox, 'EdgeColor', 'r');
+        fprintf('Object has Eccentricity = %f, MajorAxisLength = %f and MinorAxisLength = %f\n', ecc.Eccentricity, max.MajorAxisLength, min.MinorAxisLength);
 
     end
     
