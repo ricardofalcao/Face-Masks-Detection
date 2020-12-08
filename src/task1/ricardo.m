@@ -1,4 +1,5 @@
 close all;
+clear;
 ImgRGBOriginal = imread(sprintf('data/%d.png', 2));
      
 figure;
