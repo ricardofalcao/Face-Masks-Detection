@@ -1,6 +1,6 @@
-function [BBx, New_BW] = extractfaces(BW)
+function [BBx, NBB, New_BW] = extractfaces(BW)
     BBx = zeros([size(BW), 1]);
-    I = size(BBx, 3);
+    NBB = size(BBx, 3) - 1;
     
     New_BW = BW;
     
@@ -27,8 +27,8 @@ function [BBx, New_BW] = extractfaces(BW)
 
             New_BW = New_BW & ~(Reg & BB_BW);  
            
-            BBx(:,:,I) = BB_BW;
-            I = I + 1;
+            BBx(:,:,NBB + 1) = BB_BW;
+            NBB = NBB + 1;
         end
 
     end

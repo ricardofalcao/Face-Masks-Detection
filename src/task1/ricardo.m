@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-ImageIndex = 2;
+ImageIndex = 1;
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
@@ -135,8 +135,7 @@ for i = 0 : 10
         subplot(2, 6, i + 1), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
-    [BB1, Mask] = extractfaces(Mask);
-    NFaces = size(BB1, 3);
+    [BB1, NFaces, Mask] = extractfaces(Mask);
 
     for j = 1 : NFaces
         Face = BB1(:,:,j);
