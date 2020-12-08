@@ -1,16 +1,28 @@
 close all;
 clear;
-ImgRGBOriginal = imread(sprintf('data/%d.png', 1));
-     
-figure;
-subplot(2, 6, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
 
-%% Teste 1 - Pre processing (Código aproveitado do Help)
+GT_Store = load('data/ground_truth.mat');
+GT_Array = GT_Store.ground_truth_store;
+
+ShowPlots = 1;
+
+ImageIndex = 2;
+ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
+     
+if ShowPlots == 1
+    figure;
+    subplot(2, 6, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+end
+
+%% Fase 1 - Pre processing (Gaussian filter)
 
 ImgRGB = imgaussfilt(ImgRGBOriginal, 10);
-subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 
-%% Teste 2 - Pele
+if ShowPlots == 1
+    subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
+end
+
+%% Fase 2 - Detect skin tone
 
 %Isolate R. 
 R = ImgRGB(:,:,1);
@@ -51,141 +63,114 @@ MaskRGB2 = (R > 220) & (G > 210) & (B > 170) & (imabsdiff(R,G) <= 15) & (R > B) 
 MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069) & (Cr >= -1.005 * double(Cb) + 234.5652) & (Cr <= -1.15 * double(Cb) + 301.75) & (Cr <= -2.2857 * double(Cb) + 432.85);
 MaskHSV = H < (50 / 360) | H > (230 / 360);
 
-Mask = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
-subplot(2, 6, 3), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Pele');
+MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
+if ShowPlots == 1
+    subplot(2, 6, 3), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Pele');
+end
 
-Mask = purgesmallregions(Mask);
-subplot(2, 6, 4), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Purge small');
+MaskSkin = purgesmallregions(MaskSkin);
+if ShowPlots == 1
+    subplot(2, 6, 4), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small');
+end
 
-Mask = imclose(Mask, ones(10));
-subplot(2, 6, 5), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Close');
+%Mask = imclose(Mask, ones(10));
+%subplot(2, 6, 5), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Close');
 
-Gray = rgb2gray(ImgRGB);
-MaskEdge = edge(Gray, 'Canny', [], 10);
+MaskEdge = edge(Y, 'Canny', [], 10);
 MaskEdge = imclose(MaskEdge, strel('disk', 50));
 MaskEdge = imfill(MaskEdge, 'holes');
-subplot(2, 6, 6); imshow(MaskEdge, 'InitialMagnification', 'fit'), title('Mask - Edge');
 
-Mask = Mask & MaskEdge;
-subplot(2, 6, 7), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - With Edge');
+if ShowPlots == 1
+    subplot(2, 6, 6); imshow(MaskEdge, 'InitialMagnification', 'fit'), title('Mask - Edge');
+end
 
-Mask = purgesmallregions(Mask);
-subplot(2, 6, 8), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Purge small regions');
+MaskSkin = MaskSkin & MaskEdge;
+if ShowPlots == 1
+    subplot(2, 6, 7), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - With Edge');
+end
 
-Mask = imclose(Mask, ones(5));
-subplot(2, 6, 9), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Close');
+MaskSkin = purgesmallregions(MaskSkin);
 
-%% Teste 3 - Transformada de Distância
+if ShowPlots == 1
+    subplot(2, 6, 8), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small regions');
+end
 
-D = bwdist(~Mask); % distance between pixel and the nearest zero pixel
-subplot(2, 6, 10), imshow(D, [], 'InitialMagnification', 'fit'), title('Mask - Distance transform of ~bw');
-
-aux = D; %%%%%%%
-
-D = -D;
-% figure, imshow(D, [], 'InitialMagnification', 'fit'), title('-D');
-D(~Mask) = -Inf;
-% figure, imshow(D, [], 'InitialMagnification', 'fit'), title('D(~Img_bw) = -Inf');
-
-L = watershed(D);
-% rgb = label2rgb(L, 'jet', [.5 .5 .5]);
-subplot(2, 6, 11), imshow(L, [], 'InitialMagnification', 'fit'), title('Mask - Watershed');
+%% Fase 3 - Bounding boxes
 
 
-Out = im2double(ImgRGB) .* repmat(Mask, [1,1,3]); 
+ImgRGB_BB = ImgRGBOriginal;
 
-subplot(2, 6, 12), imshow(Out, [], 'InitialMagnification', 'fit'), title('Final');
+Mask = MaskSkin;
 
+if ShowPlots == 1
+    figure;
+end
 
-%% Teste 4 - Region Growing
+GT = GT_Array(ImageIndex).ground_truth;
+GT_Len = size(GT,1);
+GT_BW = zeros([GT_Len, size(Y)]);
 
-figure;
-
-subplot(2,3,1), imshow(aux, [], 'InitialMagnification', 'fit'), title('aux');
-
-
-% f = aux;
-% S = f >= max(aux(:))/2; % initial seed with highest intensity (largest distance to the background = centers of the image)
-% T = max(aux(:))/1; %  threshold value
-% 
-% [g, NR, SI, TI] = regiongrow(f, S, T);
-% 
-% subplot(2,3,2), imshow(g, [], 'InitialMagnification', 'fit'), title('Region Growing');
-
-g = aux > 0.9*mean(nonzeros(aux(:))); % imagem 1
-% g = aux > 1.2*mean(nonzeros(aux(:))); % imagem 2
-subplot(2,3,2), imshow(g, [], 'InitialMagnification', 'fit'), title('Threshold');
-
-g = imopen(g, strel('disk', 5));
-subplot(2,3,3), imshow(g, [], 'InitialMagnification', 'fit'), title('open');
-
-g = purgesmallregions(g);
-subplot(2,3,4), imshow(g, [], 'InitialMagnification', 'fit'), title('purge small regions');
-
-[L, N] = bwlabel(g);
-subplot(2,3,5), imshow(L, [], 'InitialMagnification', 'fit'), title('labeled');
-
-
-subplot(2,3,6), imshow(ImgRGBOriginal, [], 'InitialMagnification', 'fit'), title('Bounding Box');
-
-
-
-hold on;
-for k = 1 : N
-
-    props = regionprops((L == k), 'BoundingBox', 'Eccentricity', 'ConvexImage', 'ConvexHull');
-
-    convex = regionprops(props.ConvexImage, 'MajorAxisLength', 'MinorAxisLength');
+for k = 1 : size(GT, 1)
+    BB = GT(k,:);
     
-    if (props.Eccentricity > 0.7) && (convex.MajorAxisLength < 2.5 * convex.MinorAxisLength)
-        
-%         rectangle('Position', props.BoundingBox, 'EdgeColor', 'r');
-        fprintf('Object has Eccentricity = %f, MajorAxisLength = %f and MinorAxisLength = %f\n', props.Eccentricity, convex.MajorAxisLength, convex.MinorAxisLength);
+    Xstart = min([BB(1), BB(2)]);
+    Xend = max([BB(1), BB(2)]);
+    
+    Ystart = min([BB(3), BB(4)]);
+    Yend = max([BB(3), BB(4)]);
+    
+    for x = Xstart : Xend
+        for y = Ystart : Yend
+            GT_BW(k, x, y) = 1;
+        end
+    end 
+end
 
+TP = 0;
+FP = 0;
+FN = zeros(GT_Len);
+
+for i = 0 : 10
+    if ShowPlots == 1
+        subplot(2, 6, i + 1), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
-end
-hold off;
+    [BB1, Mask] = extractfaces(Mask);
+    NFaces = size(BB1, 3);
 
-%% Teste NOVO
-
-figure;
-subplot(2,3,1), imshow(aux, [], 'InitialMagnification', 'fit'), title('aux');
-
-[L, N] = bwlabel(aux);
-subplot(2,3,2), imshow(L, [], 'InitialMagnification', 'fit'), title('labeled');
-
-hold on;
-for k = 1 : N
-
-    props = regionprops((L == k), 'BoundingBox', 'Eccentricity', 'ConvexImage', 'ConvexHull');
-
-    convex = regionprops(props.ConvexImage, 'MajorAxisLength', 'MinorAxisLength');
-    
-%     rectangle('Position', props.BoundingBox, 'EdgeColor', 'r');
-    
-    if (props.Eccentricity > 0.7) && (convex.MajorAxisLength < 2.5 * convex.MinorAxisLength)
-       
-        fprintf('Object has Eccentricity = %f, MajorAxisLength = %f and MinorAxisLength = %f\n', props.Eccentricity, convex.MajorAxisLength, convex.MinorAxisLength);
+    for j = 1 : NFaces
+        Face = BB1(:,:,j);
+        Aux = cat(3, uint8(Face) * 255, zeros(size(Face)), zeros(size(Face)));
+        ImgRGB_BB = imadd(ImgRGB_BB, Aux);
         
-        BB = props.BoundingBox;
+        JMax = -1;
+        JMaxI = 0;
         
-        BB_BW = zeros(size(L));
-        for x = 0 : uint16(BB(3))
-            for y = 0 : uint16(BB(4))
-                
-                BB_BW(uint16(BB(2)) + y, uint16(BB(1)) + x) = 1;
+        for k = 1 : GT_Len
+            JN = jaccard(Face, squeeze(GT_BW(k,:,:)));
+            
+            if JN > JMax
+                JMax = JN;
+                JMaxI = k;
             end
         end
         
-        figure, imshow(BB_BW, [], 'InitialMagnification', 'fit'), title('BB_BW');
+        FN(JMaxI) = 1;
         
-        face = (L==k) & BB_BW;
-        
-        figure, imshow(face, [], 'InitialMagnification', 'fit'), title('new');        
-        
-        
+        if JMax >= 0.5
+            TP = TP + 1;
+        else
+            FP = FP + 1;
+        end
     end
-    
+
+    Mask = imerode(Mask, strel('disk', 5));
 end
+
+if ShowPlots == 1
+    subplot(2, 6, 11), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
+end
+
+FN = length(FN) - nnz(FN);
+fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 
