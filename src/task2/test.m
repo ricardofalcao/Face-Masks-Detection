@@ -1,57 +1,53 @@
-% function test
-% 
-%     global i 
-%     
-%     for i = 1:10
-%         if i==3 
-%             continue
-%         end
-%         iterate();
-%     end
-% 
-% end
-
 function test
+   global img_index
+   
+   for img_index = 7:7
+       mainLoop(img_index);
+   end
+end
+
+function mainLoop(id)
+
     global i
     
-    i = 6; 
-    img = findFace(i);
-    skin_thresh = extractFaces(img);
-    img_ycbcr = rgb2ycbcr(img);
+    file_name = sprintf('data/%d.png', id);
+    original = uint8(imread(file_name));
+        
+    figure(1); clf(1);
+    imshow(original)
     
-    img_ycbcr_thresh = imbinarize(img_ycbcr(:,:,1), 'global');
-%     img_ycbcr_thresh = imopen(img_ycbcr_thresh, strel('disk', 3));
+    gt_data = load('data/ground_truth.mat');    
+    BB = gt_data.ground_truth_store(id).ground_truth;
     
-    % YCrCb + Y threshold
-%     figure(1); clf(1);
-%     subplot(2,2,1), imshow(img), title('original')
-%     subplot(2,2,2), imshow(skin_thresh, []) , title('skin_thresh')
-%     subplot(2,2,3), imshow(img_ycbcr) , title('YCrCb')
-%     subplot(2,2,4), imshow(img_ycbcr_thresh), title('YCrCb thresh')
+    for i = 1:size(BB, 1)
        
-    % Convex hull
-    ch_objects = bwconvhull(img_ycbcr_thresh, 'objects');
-%     figure(2); clf(2);
-%     subplot(1,3,1), imshow(img), title('original')
-%     subplot(1,3,2), imshow(img_ycbcr_thresh), title('YCrCb thresh')
-%     subplot(1,3,3), imshow(ch_objects), title('Added Convex Hull')
-    
-    % Hsu Paper Method
-    eyes = hsuEyesMethod(img, ch_objects);
-    lips = hsuLipsMethod(img, ch_objects);
-    
-%     figure(3); clf(3);
-%     subplot(1,3,1), imshow(img), title('original')
-%     subplot(1,3,2), imshow(eyes, []), title('eyes')
-%     subplot(1,3,3), imshow(lips, []), title('lips')
-    
-    detect_lips(lips);
+        img = im2uint8(zeros(BB(i,2)-BB(i,1),BB(i,4)-BB(i,3),3));   
+
+        for j = 1:size(img,1)    
+            for k = 1:size(img,2)
+                img(j,k,:) = original(j+BB(i,1), k+BB(i,3),:);
+            end
+        end  
+        
+        detect_features(img);
+    end
     
 end
 
-function [Out] = extractFaces(ImgRGB)
-    CE = fspecial('average', 5);
-    ImgRGB = imfilter(ImgRGB, CE);
+function detect_features(img)
+
+    face_mask = faceMask(img);
+%     ch_objects = bwconvhull(face_mask, 'objects');
+%     ch_objects = face_mask;
+    ch_objects = ones(size(face_mask));
+             
+    detect_eyes(img, ch_objects);
+%     detect_lips(img, ch_objects);
+end
+
+function [Out] = faceMask(ImgRGB)
+    
+    ImgRGB = imgaussfilt(ImgRGB, 10);
 
     %Isolate R. 
     R = ImgRGB(:,:,1);
@@ -59,79 +55,32 @@ function [Out] = extractFaces(ImgRGB)
     G = ImgRGB(:,:,2);
     %Isolate B. 
     B = ImgRGB(:,:,3);
-    
+
     ImgYCbCr = rgb2ycbcr(ImgRGB);
-    
-    %Isolate Y. 
-    Y = ImgYCbCr(:,:,1);
+
     %Isolate Cb. 
     Cb = ImgYCbCr(:,:,2);
     %Isolate Cr. 
     Cr = ImgYCbCr(:,:,3);
-    
+
     ImgHSV = rgb2hsv(ImgRGB);
     
     %Isolate H. 
     H = ImgHSV(:,:,1);
-    %Isolate S. 
-    S = ImgHSV(:,:,2);
-    %Isolate V. 
-    V = ImgHSV(:,:,3);
-    
-    % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.718.1964&rep=rep1&type=pdf
-    
-    MaskRGB = (R > 95) & (G > 40) & (B > 20) & (R > G) & (R > B) & (imabsdiff(R,G) > 15);
+
+    MaskRGB = (R > 95) & (G > 40) & (B > 20) & ((max(max(R,G), B) - min(min(R,G), B)) > 15) & (imabsdiff(R, G) > 15)  & (R > G) & (R > B);
+    MaskRGB2 = (R > 220) & (G > 210) & (B > 170) & (imabsdiff(R,G) <= 15) & (R > B) & (G > B);
+
     MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069) & (Cr >= -1.005 * double(Cb) + 234.5652) & (Cr <= -1.15 * double(Cb) + 301.75) & (Cr <= -2.2857 * double(Cb) + 432.85);
     MaskHSV = H < (50 / 360) | H > (230 / 360);
-    
-    Mask = MaskRGB & MaskYCbCr & MaskHSV;
-    
-    [Reg, N] = bwlabel(Mask);
-    Count = zeros(N,2);
-    
-    for i = 1:N
-       Count(i, 1) = i;
-       Count(i, 2) = nnz(Reg == i);
-    end
-    
-    RegAvg = mean(Count(:,2));
-    Mask2 = zeros(size(Mask));
-    
-    for i = 1:N
-       if Count(i, 2) > RegAvg
-           Mask2 = Mask2 | (Reg == i);
-       end
-    end
-    
-    Out = im2double(ImgRGB) .* repmat(Mask2, [1,1,3]); 
+
+    Out = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
+    Out = purgesmallregions(Out);
+    Out = imclose(Out, ones(10));
+%     Out = imerode(Out, strel('disk', 10));
 end
 
-function [Out] = findFace(i)
-
-    file_name = sprintf('data/%d.png', i);
-    filebb_name = sprintf('data/%d_gt_visualization_do_not_use_for_evaluation.png', i);
-
-    img = uint8(imread(file_name));
-    img_bb = uint8(imread(filebb_name));
-
-    % Clean background from image
-    gt_data = load('data/ground_truth.mat');
-    BB = gt_data.ground_truth_store(i).ground_truth;
-    if size(BB,1) == 1
-        img_final = zeros(BB(2)-BB(1),BB(4)-BB(3),3);   
-
-        for i = 1:size(img_final,1)    
-            for j = 1:size(img_final,2)
-                img_final(i,j,:) = img(i+BB(1), j+BB(3),:);
-            end
-        end
-    end
-
-    img_final = uint8(img_final);
-    Out = img_final;
-end
-
-function [Out] = hsuEyesMethod(img_rgb, convex_hull)    
+function [Out] = hsuEyesMethod(img_rgb, convex_hull)
     
     img_ycbcr = im2double(rgb2ycbcr(img_rgb));
     
@@ -145,15 +94,16 @@ function [Out] = hsuEyesMethod(img_rgb, convex_hull)
 
     % Luma map
     y_original = img_ycbcr(:,:,1);
-    y_dilated = imdilate(y_original, offsetstrel('ball', 3, 3));
-    y_eroded = imerode(y_original, offsetstrel('ball', 3, 1));
+    y_dilated = imdilate(y_original, offsetstrel('ball', 21, 1));
+    y_eroded = imerode(y_original, offsetstrel('ball', 5, 1));
     eye_map_y = y_dilated ./ ( y_eroded + 1 );  
     
     % Result
-    Out = eye_map_c .* eye_map_y;
-    Out = imdilate(Out, strel('disk', 5));
-    Out = Out ./ max(Out(:));
+    Out = eye_map_c .* eye_map_y;  
+    Out = imdilate(Out, strel('disk', 2));
+    Out = imopen(Out, strel('disk', 3));
     Out = Out .* convex_hull; % Mask to only output the face ROI
+    Out = Out ./ max(max(Out));
     
     % Debug
 %     figure;
@@ -161,7 +111,35 @@ function [Out] = hsuEyesMethod(img_rgb, convex_hull)
 %     subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
 %     subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
 %     subplot(2,2,4), imshow(Out, []), title('Output Image')
-%     imshow(Out, []), title('final')
+
+end
+
+function detected = detect_eyes(original, ch_objects)
+    global i img_index
+    
+    img = hsuEyesMethod(original, ch_objects);
+    half = im2double(img(1 : floor( size(img, 1) / 2 ) , :));   
+    
+    % Detect edges
+    canny = edge(half, 'canny', 0.5);
+
+    % Threshold detecting high luma intensities
+    thresh = imbinarize(half, graythresh(half));
+    thresh_stats = regionprops(logical(bwlabel(thresh)), 'all');
+    % Algorithm
+    eyes = 0;  
+    
+    fprintf('Img %d | Face %d -> Eyes = %d\n', img_index, i, eyes);
+
+    % Debug figures
+    figure(i+1); clf(i+1);
+    subplot(2,2,1), imshow(original), title('Original')
+    subplot(2,2,2), imshow(half, []), title('Top half')
+    subplot(2,2,3), imshow(thresh, []), title('Otsu')
+    subplot(2,2,4), imshow(canny), title('Canny')
+    
+    % Return bool [0 = not found; 1 = found]
+    detected = 0;
 end
 
 function [Out] = hsuLipsMethod(img_rgb, convex_hull)
@@ -189,11 +167,12 @@ function [Out] = hsuLipsMethod(img_rgb, convex_hull)
     niu = 0.95 * upper_sum/bottom_sum;
     
     % Result
-    Out = cr_square .* ( ( cr_square - niu * cr_cb_div) .^ 2 );  
-    Out = imdilate(Out, strel('disk', 3));
+    Out = cr_square .* ( ( cr_square - niu * cr_cb_div) .^ 2 ); 
+    Out = imdilate(Out, strel('disk', 5));
     Out = Out .* convex_hull;
-    
-    % Debug
+    Out = Out ./ max(max(Out));
+
+%     Debug
 %     figure;
 %     subplot(2,2,1), imshow(img_rgb), title('Input Image')
 %     subplot(2,2,2), imshow(cr_cb_div, []), title('Cr/Cb')
@@ -202,32 +181,61 @@ function [Out] = hsuLipsMethod(img_rgb, convex_hull)
 
 end
 
-function detect_lips(img)
-        
-    global i;
+function detected = detect_lips(original, ch_objects)
+    global i img_index
     
+    img = hsuLipsMethod(original, ch_objects);
     img = im2double(img);
-    half = img(size(img, 1)/2 : end,:);
-    adj = imadjust(half, [0 max(max(half))], [0.0 1.0]);
-    thresh = imquantize(adj, 0.65);
-    thresh = imclose(thresh, strel('disk', 3));
-        
-    figure(i);
-    subplot(2,2,1), imshow(img, []), title('original')
-    subplot(2,2,2), imshow(half, []), title('bottom half')
-    subplot(2,2,3), imshow(thresh, []), title('thresh 50%')
-    subplot(2,2,4), imshow(label2rgb(bwlabel(thresh))), title('regions')
+    half = img(floor((size(img, 1)/2)) : end,:); 
     
-    thresh_stats = regionprops(logical(bwlabel(thresh)), 'all')
+    % Detect red color in HSV space
+    img_hsv = rgb2hsv(original);
+    half_hsv = img_hsv(floor((size(img, 1)/2)) : end,:, :); 
+   	hImage = half_hsv(:,:,1);
+    h_mask = (hImage <= 0.05) | (hImage >= 0.95);
     
-    viscircles(thresh_stats.Centroid, 0.1);
-    
-    if size(thresh_stats.Centroid, 1) == 1
-        if thresh_stats.Orientation < 70 && thresh_stats.Orientation > -70
-            fprintf('Img %d : Lips\n', i);
-        end
-    elseif size(thresh_stats.Centroid, 1) > 1
-        fprintf('Img %d : No Lips\n', i);
+    % Rescale image to [0.0 1.0]
+    if max(max(half)) > 0
+        half = imadjust(half, [0 max(max(half))], [0.0 1.0]);
+    else
+        half = zeros(size(half));
     end
     
+    % Threshold detecting high luma intensities in detected red zones
+    thresh = imbinarize(half, 0.8);
+    thresh = imclose(thresh, strel('disk', 5));
+    thresh = thresh .* h_mask;
+    thresh_stats = regionprops(logical(bwlabel(thresh)), 'all');
+    
+    % Algorithm
+    lips = 0;
+    fprintf('Nº of regions found = %d\n', size(thresh_stats, 1));
+    
+    if size(thresh_stats, 1) == 1
+         if thresh_stats.Orientation < 45 && thresh_stats.Orientation > -45
+                 if thresh_stats.Eccentricity < 0.9
+                     if thresh_stats.Centroid(2) > 0.1 * size(img, 2) && thresh_stats.Centroid(2) < 0.9 * size(img, 2)
+                         lips = 1;
+                     end
+                 end
+         end
+    end
+    
+    fprintf('Img %d | Face %d -> Lips = %d\n', img_index, i, lips);
+    
+    % Return bool [0 = not found; 1 = found]
+    detected = lips;
+    
+    % Debug figures
+    figure(i+1); clf(i+1);
+    subplot(2,2,1), imshow(original), title('Original')
+    subplot(2,2,2), imshow(h_mask, []), title('Bottom Half - Lips Detection')
+    subplot(2,2,3), imshow(thresh, []), title('After Threshold')
+    subplot(2,2,4), imshow(label2rgb(bwlabel(thresh))), title('Detected Regions')
+    
+    hold on
+    for n = 1:size(thresh_stats, 1)
+        rectangle('Position', thresh_stats(n).BoundingBox, 'EdgeColor', 'red'); 
+    end
+    hold off
 end
