@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-ImageIndex = 1;
+ImageIndex = 16;
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
@@ -95,6 +95,8 @@ if ShowPlots == 1
     subplot(2, 6, 8), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small regions');
 end
 
+MaskSkin = imopen(MaskSkin, strel('disk', 10));
+
 %% Fase 3 - Bounding boxes
 
 
@@ -131,8 +133,11 @@ FP = 0;
 FN = zeros(GT_Len);
 
 for i = 0 : 10
+    %D = bwdist(~Mask);
+    %DMask = D > 30;
+    
     if ShowPlots == 1
-        subplot(2, 6, i + 1), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+        subplot(2, 6, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
     [BB1, NFaces, Mask] = extractfaces(Mask);
@@ -156,7 +161,7 @@ for i = 0 : 10
         
         FN(JMaxI) = 1;
         
-        if JMax >= 0.5
+        if JMax >= 0.3
             TP = TP + 1;
         else
             FP = FP + 1;
