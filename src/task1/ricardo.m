@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 27 : 27
+for ImageIndex = 1 : 1
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -78,7 +78,9 @@ end
 %subplot(2, 6, 5), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Close');
 
 MaskEdge = edge(Y, 'Canny', [], 10);
+
 MaskEdge = imclose(MaskEdge, strel('disk', 50));
+
 MaskEdge = imfill(MaskEdge, 'holes');
 
 if ShowPlots == 1
@@ -97,6 +99,10 @@ if ShowPlots == 1
 end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
+
+if ShowPlots == 1
+    subplot(2, 6, 9), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Open');
+end
 
 
 %% Transformada Para Matar Pontes
@@ -157,9 +163,8 @@ for i = 0 : 13
 
     %Mask = hull_boundary(Mask);
     
-    fprintf("Iteration %d\n", i+1);
-    
     if ShowPlots == 1 %&& i == 0
+        fprintf("Iteration %d\n", i+1);
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
@@ -209,7 +214,10 @@ for i = 0 : 13
     
     Mask = purgesmallregions(Mask);
     
-    fprintf("\n");
+    if ShowPlots == 1
+        fprintf("\n");
+    end
+    
 end
 
 if ShowPlots == 1
