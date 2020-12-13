@@ -1,7 +1,7 @@
 function test
    global img_index
    
-   for img_index = 7:7
+   for img_index = 1
        mainLoop(img_index);
    end
 end
@@ -37,12 +37,13 @@ end
 function detect_features(img)
 
     face_mask = faceMask(img);
-%     ch_objects = bwconvhull(face_mask, 'objects');
+    ch_objects = bwconvhull(face_mask, 'objects');
 %     ch_objects = face_mask;
-    ch_objects = ones(size(face_mask));
+%     ch_objects = ones(size(face_mask));
              
     detect_eyes(img, ch_objects);
 %     detect_lips(img, ch_objects);
+%     projections(img, ch_objects);
 end
 
 function [Out] = faceMask(ImgRGB)
@@ -100,24 +101,25 @@ function [Out] = hsuEyesMethod(img_rgb, convex_hull)
     
     % Result
     Out = eye_map_c .* eye_map_y;  
+    Out = imtophat(Out, strel('disk', 11));
     Out = imdilate(Out, strel('disk', 2));
     Out = imopen(Out, strel('disk', 3));
     Out = Out .* convex_hull; % Mask to only output the face ROI
     Out = Out ./ max(max(Out));
     
     % Debug
-%     figure;
-%     subplot(2,2,1), imshow(img_rgb), title('Input Image')
-%     subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
-%     subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
-%     subplot(2,2,4), imshow(Out, []), title('Output Image')
+    figure;
+    subplot(2,2,1), imshow(img_rgb), title('Input Image')
+    subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
+    subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
+    subplot(2,2,4), imshow(Out, []), title('Output Image')
 
 end
 
-function detected = detect_eyes(original, ch_objects)
+function detected = detect_eyes(original, convex_hull)
     global i img_index
     
-    img = hsuEyesMethod(original, ch_objects);
+    img = hsuEyesMethod(original, convex_hull);
     half = im2double(img(1 : floor( size(img, 1) / 2 ) , :));   
     
     % Detect edges
@@ -132,11 +134,11 @@ function detected = detect_eyes(original, ch_objects)
     fprintf('Img %d | Face %d -> Eyes = %d\n', img_index, i, eyes);
 
     % Debug figures
-    figure(i+1); clf(i+1);
-    subplot(2,2,1), imshow(original), title('Original')
-    subplot(2,2,2), imshow(half, []), title('Top half')
-    subplot(2,2,3), imshow(thresh, []), title('Otsu')
-    subplot(2,2,4), imshow(canny), title('Canny')
+%     figure(i+1); clf(i+1);
+%     subplot(2,2,1), imshow(original), title('Original')
+%     subplot(2,2,2), imshow(half, []), title('Top half')
+%     subplot(2,2,3), imshow(thresh, []), title('Otsu')
+%     subplot(2,2,4), imshow(canny), title('Canny')
     
     % Return bool [0 = not found; 1 = found]
     detected = 0;
@@ -168,7 +170,8 @@ function [Out] = hsuLipsMethod(img_rgb, convex_hull)
     
     % Result
     Out = cr_square .* ( ( cr_square - niu * cr_cb_div) .^ 2 ); 
-    Out = imdilate(Out, strel('disk', 5));
+    Out = imtophat(Out, strel('disk', 11));
+    Out = imdilate(Out, strel('disk', 3));
     Out = Out .* convex_hull;
     Out = Out ./ max(max(Out));
 
@@ -181,10 +184,10 @@ function [Out] = hsuLipsMethod(img_rgb, convex_hull)
 
 end
 
-function detected = detect_lips(original, ch_objects)
+function detected = detect_lips(original, convex_hull)
     global i img_index
     
-    img = hsuLipsMethod(original, ch_objects);
+    img = hsuLipsMethod(original, convex_hull);
     img = im2double(img);
     half = img(floor((size(img, 1)/2)) : end,:); 
     
@@ -209,13 +212,14 @@ function detected = detect_lips(original, ch_objects)
     
     % Algorithm
     lips = 0;
-    fprintf('Nº of regions found = %d\n', size(thresh_stats, 1));
     
     if size(thresh_stats, 1) == 1
          if thresh_stats.Orientation < 45 && thresh_stats.Orientation > -45
                  if thresh_stats.Eccentricity < 0.9
                      if thresh_stats.Centroid(2) > 0.1 * size(img, 2) && thresh_stats.Centroid(2) < 0.9 * size(img, 2)
-                         lips = 1;
+                         if thresh_stats.Centroid(1) > 0.1 * size(half, 1) && thresh_stats.Centroid(1) < 0.9 * size(half, 1)
+                             lips = 1;
+                         end
                      end
                  end
          end
@@ -228,14 +232,24 @@ function detected = detect_lips(original, ch_objects)
     
     % Debug figures
     figure(i+1); clf(i+1);
-    subplot(2,2,1), imshow(original), title('Original')
-    subplot(2,2,2), imshow(h_mask, []), title('Bottom Half - Lips Detection')
-    subplot(2,2,3), imshow(thresh, []), title('After Threshold')
-    subplot(2,2,4), imshow(label2rgb(bwlabel(thresh))), title('Detected Regions')
+    subplot(1,3,1), imshow(original), title('Original')
+    subplot(1,3,2), imshow(thresh, []), title('Bottom Half, After Threshold')
+    subplot(1,3,3), imshow(label2rgb(bwlabel(thresh))), title('Detected Regions')
     
     hold on
     for n = 1:size(thresh_stats, 1)
         rectangle('Position', thresh_stats(n).BoundingBox, 'EdgeColor', 'red'); 
     end
     hold off
+end
+
+function projections(img_rgb, convex_hull)
+
+    lips = hsuLipsMethod(img_rgb, convex_hull);
+    eyes = hsuEyesMethod(img_rgb, convex_hull);
+    
+    figure; clf;
+    subplot(1,2,1), imshow(eyes), title('Eyes')
+    subplot(1,2,2), imshow(lips), title('Lips')
+   
 end
