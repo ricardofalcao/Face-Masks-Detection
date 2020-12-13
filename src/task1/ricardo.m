@@ -176,7 +176,7 @@ FN = zeros(GT_Len);
 
 for i = 0 : 8
 
-%     Mask = hull_boundary(Mask);
+    Mask = hull_boundary(Mask);
     
     fprintf("Iteration %d\n", i+1);
     
@@ -226,11 +226,3 @@ end
 
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
-
-%% Border 2
-
-figure;
-
-subplot(1,2,1), imshow(DMask);
-
-subplot(1,2,2), imshow(hull_boundary(DMask));
