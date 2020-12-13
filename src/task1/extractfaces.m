@@ -1,6 +1,8 @@
 function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
     Debug = 1;
     
+    new_maxArea = maxArea;
+    
     Size = size(BW);
     BBx = zeros([Size, 1]);
     NBB = size(BBx, 3) - 1;
@@ -39,7 +41,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         
          Rectangularity = props.Area / (BB(3)*BB(4));
          
-         if (Rectangularity > 0.8)
+         if (Rectangularity < 0.5 || Rectangularity > 0.8)
             if Debug == 1
                 fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
             end
@@ -86,12 +88,23 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
         
-        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.07)
+        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.1)
             if Debug == 1
                 fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
             end
             
             continue;
+        end
+        
+        if maxArea > 4 * props.Area
+             if Debug == 1
+                fprintf('Object failed Relative Area -> %f > 4* %f\n', maxArea, props.Area);
+             end
+             
+            New_BW = imabsdiff(New_BW, Reg);
+            
+            continue;
+           
         end
         
         fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
@@ -111,8 +124,9 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         BBx(:,:,NBB + 1) = BB_BW;
         NBB = NBB + 1;
         
-        new_maxArea = nnz(Reg);
+        new_maxArea = max([nnz(Reg), maxArea]);
 
+        
     end
 
 end

@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 1 : 1
+for ImageIndex = 19 : 19
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -159,6 +159,8 @@ TP = 0;
 FP = 0;
 FN = zeros(GT_Len);
 
+maxArea = 0;
+
 for i = 0 : 13
 
     %Mask = hull_boundary(Mask);
@@ -168,7 +170,9 @@ for i = 0 : 13
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
-    [BB1, NFaces, Mask, L] = extractfaces(Mask);
+    [BB1, NFaces, Mask, L, new_maxArea] = extractfaces(Mask, maxArea);
+    
+    maxArea = new_maxArea;
     
     if ShowPlots == 1 && i > 0
         %subplot(3, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
