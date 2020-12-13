@@ -6,7 +6,8 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-ImageIndex = 2;
+for ImageIndex = 27 : 27
+    
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
@@ -16,7 +17,7 @@ end
 
 %% Fase 1 - Pre processing (Gaussian filter)
 
-ImgRGB = imgaussfilt(ImgRGBOriginal, 10);
+ImgRGB = imgaussfilt(ImgRGBOriginal, 5);
 
 if ShowPlots == 1
     subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
@@ -154,18 +155,18 @@ FN = zeros(GT_Len);
 
 for i = 0 : 13
 
-    Mask = hull_boundary(Mask);
+    %Mask = hull_boundary(Mask);
     
     fprintf("Iteration %d\n", i+1);
     
-    if ShowPlots == 1 && i == 0
+    if ShowPlots == 1 %&& i == 0
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
     [BB1, NFaces, Mask, L] = extractfaces(Mask);
     
     if ShowPlots == 1 && i > 0
-        subplot(3, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+        %subplot(3, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
 
     for j = 1 : NFaces
@@ -194,10 +195,19 @@ for i = 0 : 13
         end
     end
 
-    Mask = imerode(Mask, strel('disk', 5));
-%     
-%     D = bwdist(~Mask);
-%     Mask = D > mean(nonzeros(D(:)));
+    
+    Test = Y;
+    Test(~Mask) = 0;
+    
+    Edge = edge(Test, 'canny', []);
+    Edge = imclose(Edge, strel('disk', 5));
+    
+    Mask = Mask & (~Edge);
+    
+    Mask = imfill(Mask, 'holes');
+    Mask = imerode(Mask, ones(3));
+    
+    Mask = purgesmallregions(Mask);
     
     fprintf("\n");
 end
@@ -208,3 +218,4 @@ end
 
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
+end

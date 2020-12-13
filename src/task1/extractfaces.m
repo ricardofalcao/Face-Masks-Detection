@@ -1,5 +1,8 @@
 function [BBx, NBB, New_BW, L] = extractfaces(BW)
-    BBx = zeros([size(BW), 1]);
+    Debug = 1;
+    
+    Size = size(BW);
+    BBx = zeros([Size, 1]);
     NBB = size(BBx, 3) - 1;
     
     New_BW = BW;
@@ -9,20 +12,37 @@ function [BBx, NBB, New_BW, L] = extractfaces(BW)
     for k = 1 : N
         Reg = (L == k);
                 
-        fprintf('Region %d\n', k);
+        if Debug == 1
+            fprintf('Region %d\n', k);
+        end
 
-        props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area', 'Solidity');
+        props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area', 'Solidity', 'Centroid');
         BB = props.BoundingBox;
+        C = props.Centroid;
         
+        NullThickness = 0.05;
+        if (C(1) < NullThickness*Size(1) || C(1) > (1 - NullThickness)*Size(1))
+            continue
+        end
+        
+        if (C(2) < NullThickness*Size(2) || C(2) > (1 - NullThickness)*Size(2))
+            continue
+        end
         
         if (props.Solidity < 0.7)
-            fprintf('Object failed Solidity -> %f\n', props.Solidity);
+            if Debug == 1
+                fprintf('Object failed Solidity -> %f\n', props.Solidity);
+            end
+            
             continue;
         end       
         
         
         if (props.Area < 3000)
-            fprintf('Object failed Area -> %f\n', props.Area);
+            if Debug == 1
+                fprintf('Object failed Area -> %f\n', props.Area);
+            end
+            
             New_BW = imabsdiff(New_BW, Reg);
             continue;
         end
@@ -30,7 +50,10 @@ function [BBx, NBB, New_BW, L] = extractfaces(BW)
         WHRatio = BB(3) / BB(4);
         
         if (WHRatio < 0.4 || WHRatio > 1.8)
-            fprintf('Object failed Width to Height Ratio -> %f\n', WHRatio);
+            if Debug == 1
+                fprintf('Object failed Width to Height Ratio -> %f\n', WHRatio);
+            end
+            
             continue;
         end
         
@@ -38,22 +61,33 @@ function [BBx, NBB, New_BW, L] = extractfaces(BW)
         convex = regionprops(props.ConvexImage, 'Eccentricity');
         
         o = abs(filled.Orientation);
-        if (o <= 40 || o >= 140)
-            fprintf('Object failed Orientation -> %f\n', filled.Orientation);
+        if (o <= 50 || o >= 130)
+            if Debug == 1
+                fprintf('Object failed Orientation -> %f\n', filled.Orientation);
+            end
+            
             continue;
         end
         
-        if (filled.Eccentricity <= 0.7 || filled.Eccentricity >= 0.92)
-            fprintf('Object failed Eccentricity -> %f\n', filled.Eccentricity);
+        if (filled.Eccentricity <= 0.7 || filled.Eccentricity >= 0.9)
+            if Debug == 1
+                fprintf('Object failed Eccentricity -> %f\n', filled.Eccentricity);
+            end
+            
             continue;
         end
         
-        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.05)
-            fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
+        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.07)
+            if Debug == 1
+                fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
+            end
+            
             continue;
         end
         
-        fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
+        if Debug == 1
+            fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
+        end
         
         BB_BW = zeros(size(L));
 
