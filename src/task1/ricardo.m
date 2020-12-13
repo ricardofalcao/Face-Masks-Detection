@@ -98,7 +98,7 @@ end
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
 
 
-%% Convex Hull
+%% Border
 figure;
 
 % hull= bwconvhull(MaskSkin, 'objects');
@@ -175,8 +175,9 @@ FP = 0;
 FN = zeros(GT_Len);
 
 for i = 0 : 8
-%     D = bwdist(~Mask);
-%     DMask = D > 30;
+
+%     Mask = hull_boundary(Mask);
+    
     fprintf("Iteration %d\n", i+1);
     
     if ShowPlots == 1 && i == 0
@@ -226,3 +227,10 @@ end
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 
+%% Border 2
+
+figure;
+
+subplot(1,2,1), imshow(DMask);
+
+subplot(1,2,2), imshow(hull_boundary(DMask));

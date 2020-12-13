@@ -2,13 +2,15 @@ function [BBx, NBB, New_BW, L] = extractfaces(BW)
     BBx = zeros([size(BW), 1]);
     NBB = size(BBx, 3) - 1;
     
-    New_BW = BW;
+%     New_BW = BW;
     
     [L, N] = bwlabel(BW);
     
     for k = 1 : N
         Reg = (L == k);
-                
+        
+%         figure, imshow(bwconvhull(Reg, 'objects'));
+        
         fprintf('Region %d\n', k);
 
         props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area');

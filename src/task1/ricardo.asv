@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-ImageIndex = 2;
+ImageIndex = 1;
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
@@ -98,17 +98,22 @@ end
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
 
 
-%% Convex Hull
+%% Border
 figure;
 
 % hull= bwconvhull(MaskSkin, 'objects');
 % subplot(2,2,1), imshow(hull,[], 'InitialMagnification', 'fit'), title('Convex Hull');
 
+subplot(2,2,1), imshow(MaskSkin,[], 'InitialMagnification', 'fit'), title('MaskSkin');
+
 Border = bwperim(MaskSkin);
-sub, imshow(Border,[], 'InitialMagnification', 'fit'), title('Border');
+subplot(2,2,2), imshow(Border,[], 'InitialMagnification', 'fit'), title('Border');
 
 Border = imclose(Border, strel('disk', 10));
-figure, imshow(Border,[], 'InitialMagnification', 'fit'), title('Border Closed');
+subplot(2,2,3), imshow(Border,[], 'InitialMagnification', 'fit'), title('Border Closed');
+
+Aux = MaskSkin | Border;
+subplot(2,2,4), imshow(Aux,[], 'InitialMagnification', 'fit'), title('Border Or');
 
 
 
@@ -120,14 +125,14 @@ figure, imshow(Border,[], 'InitialMagnification', 'fit'), title('Border Closed')
 figure;
 
 % D = bwdist(~imfill(MaskSkin, 'holes'));
-D = bwdist(~MaskSkin);
+D = bwdist(~Aux);
 subplot(2,2,1), imshow(D,[], 'InitialMagnification', 'fit'), title('BwDist');
 
 DMask = D > mean(nonzeros(D(:)));
 subplot(2,2,2), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Threshold');
 
-DMask = imfill(DMask, 'holes');
-subplot(2,2,3), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Fill');
+% DMask = imfill(DMask, 'holes');
+% subplot(2,2,3), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Fill');
 
 % DMask = imerode(DMask, strel('disk', 10));
 % subplot(2,2,4), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Erosion');
@@ -169,19 +174,19 @@ TP = 0;
 FP = 0;
 FN = zeros(GT_Len);
 
-for i = 0 : 13
+for i = 0 : 8
 %     D = bwdist(~Mask);
 %     DMask = D > 30;
     fprintf("Iteration %d\n", i+1);
     
     if ShowPlots == 1 && i == 0
-        subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+        subplot(2, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
     [BB1, NFaces, Mask, L] = extractfaces(Mask);
     
     if ShowPlots == 1 && i > 0
-        subplot(3, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+        subplot(2, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
 
     for j = 1 : NFaces
@@ -215,9 +220,34 @@ for i = 0 : 13
 end
 
 if ShowPlots == 1
-    subplot(3, 5, 15), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
+    subplot(2, 5, 10), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
 end
 
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
+
+%% Border 2
+
+% x = DMask(:, 1);
+% y = DMask(:, 2);
+figure;
+
+subplot(2,2,1), imshow(DMask);
+
+hull = bwconvhull(DMask,'objects');
+subplot(2,2,2), imshow(hull, []);
+
+border = bwperim(hull);
+subplot(2,2,3), imshow(border,[]);
+
+
+
+
+% [B,L] = bwboundaries(DMask,'noholes');
+% subplot(1,3,3), imshow(label2rgb(L, @jet, [.5 .5 .5]))
+% hold on
+% for k = 1:length(B)
+%    boundary = B{k};
+%    plot(boundary(:,2), boundary(:,1), 'w', 'LineWidth', 2)
+% end
 
