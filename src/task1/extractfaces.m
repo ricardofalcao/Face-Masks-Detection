@@ -11,8 +11,15 @@ function [BBx, NBB, New_BW, L] = extractfaces(BW)
                 
         fprintf('Region %d\n', k);
 
-        props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area');
+        props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area', 'Solidity');
         BB = props.BoundingBox;
+        
+        
+        if (props.Solidity < 0.7)
+            fprintf('Object failed Solidity -> %f\n', props.Solidity);
+            continue;
+        end       
+        
         
         if (props.Area < 3000)
             fprintf('Object failed Area -> %f\n', props.Area);
@@ -41,10 +48,10 @@ function [BBx, NBB, New_BW, L] = extractfaces(BW)
             continue;
         end
         
-%         if (abs(filled.Eccentricity - convex.Eccentricity) > 0.05)
-%             fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
-%             continue;
-%         end
+        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.05)
+            fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
+            continue;
+        end
         
         fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
         
