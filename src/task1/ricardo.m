@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-ImageIndex = 16;
+ImageIndex = 1;
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
@@ -97,12 +97,54 @@ end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
 
+
+%% Convex Hull
+figure;
+
+% hull= bwconvhull(MaskSkin, 'objects');
+% subplot(2,2,1), imshow(hull,[], 'InitialMagnification', 'fit'), title('Convex Hull');
+
+subplot(2,2,1), imshow(MaskSkin,[], 'InitialMagnification', 'fit'), title('MaskSkin');
+
+Border = bwperim(MaskSkin);
+subplot(2,2,2), imshow(Border,[], 'InitialMagnification', 'fit'), title('Border');
+
+Border = imclose(Border, strel('disk', 10));
+subplot(2,2,3), imshow(Border,[], 'InitialMagnification', 'fit'), title('Border Closed');
+
+Aux = MaskSkin | Border;
+subplot(2,2,4), imshow(Aux,[], 'InitialMagnification', 'fit'), title('Border Or');
+
+
+
+
+
+
+%% Transformada Para Matar Pontes
+
+figure;
+
+% D = bwdist(~imfill(MaskSkin, 'holes'));
+D = bwdist(~Aux);
+subplot(2,2,1), imshow(D,[], 'InitialMagnification', 'fit'), title('BwDist');
+
+DMask = D > mean(nonzeros(D(:)));
+subplot(2,2,2), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Threshold');
+
+% DMask = imfill(DMask, 'holes');
+% subplot(2,2,3), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Fill');
+
+% DMask = imerode(DMask, strel('disk', 10));
+% subplot(2,2,4), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Erosion');
+
+
 %% Fase 3 - Bounding boxes
 
 
 ImgRGB_BB = ImgRGBOriginal;
 
-Mask = MaskSkin;
+% Mask = MaskSkin;
+Mask = DMask;
 
 if ShowPlots == 1
     figure;
@@ -132,15 +174,20 @@ TP = 0;
 FP = 0;
 FN = zeros(GT_Len);
 
-for i = 0 : 10
-    %D = bwdist(~Mask);
-    %DMask = D > 30;
+for i = 0 : 8
+%     D = bwdist(~Mask);
+%     DMask = D > 30;
+    fprintf("Iteration %d\n", i+1);
     
-    if ShowPlots == 1
-        subplot(2, 6, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+    if ShowPlots == 1 && i == 0
+        subplot(2, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
-    [BB1, NFaces, Mask] = extractfaces(Mask);
+    [BB1, NFaces, Mask, L] = extractfaces(Mask);
+    
+    if ShowPlots == 1 && i > 0
+        subplot(2, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+    end
 
     for j = 1 : NFaces
         Face = BB1(:,:,j);
@@ -169,10 +216,11 @@ for i = 0 : 10
     end
 
     Mask = imerode(Mask, strel('disk', 5));
+    fprintf("\n");
 end
 
 if ShowPlots == 1
-    subplot(2, 6, 11), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
+    subplot(2, 5, 10), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
 end
 
 FN = length(FN) - nnz(FN);
