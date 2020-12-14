@@ -22,16 +22,18 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         BB = props.BoundingBox;
         C = props.Centroid;
         
-        NullThickness = 0.05;
+        NullThickness = 0.01;
         if (C(1) < NullThickness*Size(1) || C(1) > (1 - NullThickness)*Size(1))
+            fprintf('Object failed: Outside valid region\n');
             continue
         end
         
         if (C(2) < NullThickness*Size(2) || C(2) > (1 - NullThickness)*Size(2))
+            fprintf('Object failed: Outside valid region\n');
             continue
         end
         
-        if (props.Solidity < 0.65 || props.Solidity > 0.92)
+        if (props.Solidity < 0.65 || props.Solidity > 1)
             if Debug == 1
                 fprintf('Object failed Solidity -> %f\n', props.Solidity);
             end
@@ -49,7 +51,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
 %             continue;
 %         end          
         
-        if (props.Area < 4000)
+        if (props.Area < 4100)
             if Debug == 1
                 fprintf('Object failed Area -> %f\n', props.Area);
             end
@@ -80,7 +82,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
 
-        if (filled.Eccentricity <= 0.7 || filled.Eccentricity >= 0.9)
+        if (filled.Eccentricity <= 0.5 || filled.Eccentricity >= 0.9)
             if Debug == 1
                 fprintf('Object failed Eccentricity -> %f\n', filled.Eccentricity);
             end

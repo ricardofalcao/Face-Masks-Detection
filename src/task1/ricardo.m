@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 37 : 37
+for ImageIndex = 9 : 9
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -44,7 +44,7 @@ B = B * (K / mean(B(:))) ;
 Normal = cat(3, R, G, B);
 
 
-%% Thresholds
+%% YCbCr
 
 ImgYCbCr = rgb2ycbcr(Normal);
 
@@ -55,6 +55,8 @@ Cb = ImgYCbCr(:,:,2);
 %Isolate Cr. 
 Cr = ImgYCbCr(:,:,3);
 
+%% HSV
+
 ImgHSV = rgb2hsv(Normal);
 ans
 %Isolate H. 
@@ -63,6 +65,8 @@ H = ImgHSV(:,:,1);
 S = ImgHSV(:,:,2);
 %Isolate V. 
 V = ImgHSV(:,:,3);
+
+%% Thresholds
 
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.718.1964&rep=rep1&type=pdf
 
@@ -92,7 +96,7 @@ end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
 
-%% Fase 3 - Bounding boxes
+%% Fase 3 - Iterative method
 
 
 ImgRGB_BB = ImgRGBOriginal;
@@ -130,18 +134,13 @@ FN = zeros(GT_Len);
 maxArea = 0;
 
 for i = 0 : 7
-    if ShowPlots == 1 %&& i == 0
+    if ShowPlots == 1
         fprintf("Iteration %d\n", i+1);
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
     [BB1, NFaces, Mask, L, new_maxArea] = extractfaces(Mask, maxArea);
-    
     maxArea = new_maxArea;
-    
-    if ShowPlots == 1 && i > 0
-        %subplot(3, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
-    end
 
     for j = 1 : NFaces
         Face = BB1(:,:,j);
@@ -172,27 +171,22 @@ for i = 0 : 7
     
     Test = Y;
     Test(~Mask) = 0;
-
-    EdgeBig = edge(Test, 'Canny', [], 10);
-    EdgeBig = imclose(EdgeBig, strel('disk', 100));  
-    EdgeBig = imfill(EdgeBig, 'holes');
-    MaskSkin = MaskSkin & EdgeBig;
     
-    EdgeBig = edge(Y, 'Canny', [], 10);
+    EdgeBig = edge(Test, 'Canny', [], 10);
     EdgeBig = imclose(EdgeBig, strel('disk', 100));    
     EdgeBig = imfill(EdgeBig, 'holes');
 
     Mask = Mask & EdgeBig;
     
     Edge = edge(Test, 'canny', []);
-    Edge = imclose(Edge, strel('disk', 5));
+    Edge = imclose(Edge, strel('disk', 2));
     
     Mask = Mask & (~Edge);
     
     Mask = imfill(Mask, 'holes');
-    Mask = imerode(Mask, ones(3));
+    Mask = imerode(Mask, ones(5));
     
-    Mask = purgesmallregions(Mask);
+    Mask = purgesmallregions(Mask, 0.75);
     
     if ShowPlots == 1
         fprintf("\n");
