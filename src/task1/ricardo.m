@@ -32,13 +32,21 @@ G = ImgRGB(:,:,2);
 %Isolate B. 
 B = ImgRGB(:,:,3);
 
-%Isolate r
-r = R ./ (R + G + B);
 
-%Isolate r
-g = G ./ (R + G + B);
+%% Color Balance
 
-ImgYCbCr = rgb2ycbcr(ImgRGB);
+K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
+
+R = R * (K / mean(R(:))) ;
+G = G * (K / mean(G(:))) ;
+B = B * (K / mean(B(:))) ;
+
+Normal = cat(3, R, G, B);
+
+
+%% Thresholds
+
+ImgYCbCr = rgb2ycbcr(Normal);
 
 %Isolate Y. 
 Y = ImgYCbCr(:,:,1);
@@ -47,7 +55,7 @@ Cb = ImgYCbCr(:,:,2);
 %Isolate Cr. 
 Cr = ImgYCbCr(:,:,3);
 
-ImgHSV = rgb2hsv(ImgRGB);
+ImgHSV = rgb2hsv(Normal);
 ans
 %Isolate H. 
 H = ImgHSV(:,:,1);
@@ -66,7 +74,20 @@ MaskHSV = H < (50 / 360) | H > (230 / 360);
 
 MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
 if ShowPlots == 1
-    subplot(2, 6, 3), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Pele');
+    R = ImgRGBOriginal(:,:,1);
+    G = ImgRGBOriginal(:,:,2);
+    B = ImgRGBOriginal(:,:,3);
+    
+    R(MaskSkin==0) = 0;
+    G(MaskSkin==0) = 0;
+    B(MaskSkin==0) = 0;
+    Pele = cat(3, R, G, B);
+    
+    subplot(2, 6, 3), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
+end
+
+if ShowPlots == 1
+    subplot(2, 6, 4), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
