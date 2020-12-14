@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 39 : 39
+for ImageIndex = 2 : 2
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -66,9 +66,9 @@ MaskHSV = H < (50 / 360) | H > (230 / 360);
 
 MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
 if ShowPlots == 1
-    R = ImgRGBOriginal(:,:,1);
-    G = ImgRGBOriginal(:,:,2);
-    B = ImgRGBOriginal(:,:,3);
+%     R = ImgRGBOriginal(:,:,1);
+%     G = ImgRGBOriginal(:,:,2);
+%     B = ImgRGBOriginal(:,:,3);
     
     R(MaskSkin==0) = 0;
     G(MaskSkin==0) = 0;
@@ -246,39 +246,41 @@ fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 end
 
 
-%% Color Balance
+%%
 
-
-
-
-%% K Means
-
-% RGB = ImgRGB;
 % RGB = Pele;
 
-% figure;
+% RgbSum = R + G + B;
+% NormalizedRed = R./RgbSum;
+% NormalizedGreen = G./RgbSum;
+% NormalizedBlue = B./RgbSum;
 % 
-% subplot(3,3,1), imshow(RGB), title('Pele');
-% 
-% N =7;
-% [L,centers] = imsegkmeans(RGB, N);
-% B = labeloverlay(RGB,L);
-% subplot(3,3,2), imshow(B), title('Labeled Image')
-% 
-% max = 0;
-% 
-% Out = zeros(size(rgb2gray(RGB)));
-% 
-% for k = 1 : N
-%     Reg = (L==k);
-%     
-%     subplot(3,3,2+k), imshow(Reg, []);
-%     fprintf("Reg = %d -> avg = %f\n", k, mean(centers(k, :)));
-%    
-%     if mean(centers(k, :)) > 150 && mean(centers(k, :)) < 220
-% %         figure, imshow(Reg);
-%         Out = Out | Reg;
-%     end
-% end
-% 
-% figure, imshow(Out, []), title('Pele')
+% RGB = cat(3, NormalizedRed, NormalizedGreen, NormalizedBlue);
+% figure, imshow(uint8(RGB*255), []), title('RGB');
+
+figure;
+
+subplot(3,3,1), imshow(RGB), title('Pele');
+
+N =7;
+[L,centers] = imsegkmeans(RGB, N);
+B = labeloverlay(RGB,L);
+subplot(3,3,2), imshow(B), title('Labeled Image')
+
+max = 0;
+
+Out = zeros(size(rgb2gray(RGB)));
+
+for k = 1 : N
+    Reg = (L==k);
+    
+    subplot(3,3,2+k), imshow(Reg, []);
+    fprintf("Reg = %d -> avg = %f\n", k, mean(centers(k, :)));
+   
+    if mean(centers(k, :)) > 100 && mean(centers(k, :)) < 220
+%         figure, imshow(Reg);
+        Out = Out | Reg;
+    end
+end
+
+figure, imshow(Out, []), title('Pele')
