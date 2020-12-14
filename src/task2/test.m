@@ -1,7 +1,7 @@
 function test
    global img_index
    
-   for img_index = 1
+   for img_index = 9
        mainLoop(img_index);
    end
 end
@@ -12,12 +12,11 @@ function mainLoop(id)
     
     file_name = sprintf('data/%d.png', id);
     original = uint8(imread(file_name));
-        
-    figure(1); clf(1);
-    imshow(original)
     
     gt_data = load('data/ground_truth.mat');    
     BB = gt_data.ground_truth_store(id).ground_truth;
+    
+    confusion_matrix = zeros(3,3);
     
     for i = 1:size(BB, 1)
        
@@ -29,26 +28,35 @@ function mainLoop(id)
             end
         end  
         
-        detect_features(img);
+        algorithm(img);
     end
-    
 end
 
-function detect_features(img)
+function out_string = algorithm(img)
+
+    with_mask = 0;
+    without_mask = 0;
+    bad_mask = 0;
 
     face_mask = faceMask(img);
-    ch_objects = bwconvhull(face_mask, 'objects');
-%     ch_objects = face_mask;
-%     ch_objects = ones(size(face_mask));
-             
-    detect_eyes(img, ch_objects);
-%     detect_lips(img, ch_objects);
-%     projections(img, ch_objects);
+%     ch_objects = bwconvhull(face_mask, 'objects');
+
+    if detect_lips(img, face_mask) == 1
+        without_mask = 1;    
+    end
+    
+    if(without_mask == 1 && bad_mask == 0 && with_mask == 0)
+        out_string = 'without_mask';
+    elseif(without_mask == 0 && bad_mask == 0 && with_mask == 1)
+        out_string = 'with_mask';
+    elseif(without_mask == 0 && bad_mask == 1 && with_mask == 1)
+        out_string = 'mask_weared_incorrect';
+    end
 end
 
 function [Out] = faceMask(ImgRGB)
     
-    ImgRGB = imgaussfilt(ImgRGB, 10);
+    ImgRGB = imgaussfilt(ImgRGB, 7);
 
     %Isolate R. 
     R = ImgRGB(:,:,1);
@@ -77,8 +85,8 @@ function [Out] = faceMask(ImgRGB)
 
     Out = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
     Out = purgesmallregions(Out);
-    Out = imclose(Out, ones(10));
-%     Out = imerode(Out, strel('disk', 10));
+    Out = imclose(Out, ones(4));
+%     Out = imerode(Out, strel('disk', 2));
 end
 
 function [Out] = hsuEyesMethod(img_rgb, convex_hull)
@@ -108,40 +116,12 @@ function [Out] = hsuEyesMethod(img_rgb, convex_hull)
     Out = Out ./ max(max(Out));
     
     % Debug
-    figure;
+    figure
     subplot(2,2,1), imshow(img_rgb), title('Input Image')
     subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
     subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
     subplot(2,2,4), imshow(Out, []), title('Output Image')
 
-end
-
-function detected = detect_eyes(original, convex_hull)
-    global i img_index
-    
-    img = hsuEyesMethod(original, convex_hull);
-    half = im2double(img(1 : floor( size(img, 1) / 2 ) , :));   
-    
-    % Detect edges
-    canny = edge(half, 'canny', 0.5);
-
-    % Threshold detecting high luma intensities
-    thresh = imbinarize(half, graythresh(half));
-    thresh_stats = regionprops(logical(bwlabel(thresh)), 'all');
-    % Algorithm
-    eyes = 0;  
-    
-    fprintf('Img %d | Face %d -> Eyes = %d\n', img_index, i, eyes);
-
-    % Debug figures
-%     figure(i+1); clf(i+1);
-%     subplot(2,2,1), imshow(original), title('Original')
-%     subplot(2,2,2), imshow(half, []), title('Top half')
-%     subplot(2,2,3), imshow(thresh, []), title('Otsu')
-%     subplot(2,2,4), imshow(canny), title('Canny')
-    
-    % Return bool [0 = not found; 1 = found]
-    detected = 0;
 end
 
 function [Out] = hsuLipsMethod(img_rgb, convex_hull)
@@ -183,7 +163,7 @@ function [Out] = hsuLipsMethod(img_rgb, convex_hull)
 %     subplot(2,2,4), imshow(Out, []), title('Output Image')
 
 end
-
+    
 function detected = detect_lips(original, convex_hull)
     global i img_index
     
@@ -241,15 +221,4 @@ function detected = detect_lips(original, convex_hull)
         rectangle('Position', thresh_stats(n).BoundingBox, 'EdgeColor', 'red'); 
     end
     hold off
-end
-
-function projections(img_rgb, convex_hull)
-
-    lips = hsuLipsMethod(img_rgb, convex_hull);
-    eyes = hsuEyesMethod(img_rgb, convex_hull);
-    
-    figure; clf;
-    subplot(1,2,1), imshow(eyes), title('Eyes')
-    subplot(1,2,2), imshow(lips), title('Lips')
-   
 end
