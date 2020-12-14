@@ -32,13 +32,21 @@ G = ImgRGB(:,:,2);
 %Isolate B. 
 B = ImgRGB(:,:,3);
 
-%Isolate r
-r = R ./ (R + G + B);
 
-%Isolate r
-g = G ./ (R + G + B);
+%% Color Balance
 
-ImgYCbCr = rgb2ycbcr(ImgRGB);
+K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
+
+R = R * (K / mean(R(:))) ;
+G = G * (K / mean(G(:))) ;
+B = B * (K / mean(B(:))) ;
+
+Normal = cat(3, R, G, B);
+
+
+%% Thresholds
+
+ImgYCbCr = rgb2ycbcr(Normal);
 
 %Isolate Y. 
 Y = ImgYCbCr(:,:,1);
@@ -47,7 +55,7 @@ Cb = ImgYCbCr(:,:,2);
 %Isolate Cr. 
 Cr = ImgYCbCr(:,:,3);
 
-ImgHSV = rgb2hsv(ImgRGB);
+ImgHSV = rgb2hsv(Normal);
 ans
 %Isolate H. 
 H = ImgHSV(:,:,1);
@@ -244,11 +252,6 @@ end
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 end
-
-
-%% Color Balance
-
-
 
 
 %% K Means
