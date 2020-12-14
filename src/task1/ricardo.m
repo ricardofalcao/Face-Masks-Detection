@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 19 : 19
+for ImageIndex = 37 : 37
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -69,59 +69,7 @@ if ShowPlots == 1
     subplot(2, 6, 3), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Pele');
 end
 
-MaskSkin = purgesmallregions(MaskSkin);
-if ShowPlots == 1
-    subplot(2, 6, 4), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small');
-end
-
-%Mask = imclose(Mask, ones(10));
-%subplot(2, 6, 5), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Close');
-
-MaskEdge = edge(Y, 'Canny', [], 10);
-
-MaskEdge = imclose(MaskEdge, strel('disk', 50));
-
-MaskEdge = imfill(MaskEdge, 'holes');
-
-if ShowPlots == 1
-    subplot(2, 6, 6); imshow(MaskEdge, 'InitialMagnification', 'fit'), title('Mask - Edge');
-end
-
-MaskSkin = MaskSkin & MaskEdge;
-if ShowPlots == 1
-    subplot(2, 6, 7), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - With Edge');
-end
-
-MaskSkin = purgesmallregions(MaskSkin);
-
-if ShowPlots == 1
-    subplot(2, 6, 8), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small regions');
-end
-
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
-
-if ShowPlots == 1
-    subplot(2, 6, 9), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Open');
-end
-
-
-%% Transformada Para Matar Pontes
-
-% figure;
-
-% D = bwdist(~imfill(MaskSkin, 'holes'));
-% D = bwdist(~MaskSkin);
-% subplot(2,2,1), imshow(D,[], 'InitialMagnification', 'fit'), title('BwDist');
-% 
-% DMask = D > mean(nonzeros(D(:)));
-% subplot(2,2,2), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Threshold');
-% 
-% DMask = imfill(DMask, 'holes');
-% subplot(2,2,3), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Fill');
-
-% DMask = imerode(DMask, strel('disk', 10));
-% subplot(2,2,4), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Erosion');
-
 
 %% Fase 3 - Bounding boxes
 
@@ -129,7 +77,6 @@ end
 ImgRGB_BB = ImgRGBOriginal;
 
 Mask = MaskSkin;
-% Mask = DMask;
 
 if ShowPlots == 1
     figure;
@@ -161,10 +108,7 @@ FN = zeros(GT_Len);
 
 maxArea = 0;
 
-for i = 0 : 13
-
-    %Mask = hull_boundary(Mask);
-    
+for i = 0 : 7
     if ShowPlots == 1 %&& i == 0
         fprintf("Iteration %d\n", i+1);
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
@@ -207,6 +151,17 @@ for i = 0 : 13
     
     Test = Y;
     Test(~Mask) = 0;
+
+    EdgeBig = edge(Test, 'Canny', [], 10);
+    EdgeBig = imclose(EdgeBig, strel('disk', 100));  
+    EdgeBig = imfill(EdgeBig, 'holes');
+    MaskSkin = MaskSkin & EdgeBig;
+    
+    EdgeBig = edge(Y, 'Canny', [], 10);
+    EdgeBig = imclose(EdgeBig, strel('disk', 100));    
+    EdgeBig = imfill(EdgeBig, 'holes');
+
+    Mask = Mask & EdgeBig;
     
     Edge = edge(Test, 'canny', []);
     Edge = imclose(Edge, strel('disk', 5));

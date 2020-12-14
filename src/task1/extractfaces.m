@@ -41,15 +41,15 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         
          Rectangularity = props.Area / (BB(3)*BB(4));
          
-         if (Rectangularity < 0.5 || Rectangularity > 0.8)
-            if Debug == 1
-                fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
-            end
-            
-            continue;
-        end          
+%          if (Rectangularity < 0.5 || Rectangularity > 0.8)
+%             if Debug == 1
+%                 fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
+%             end
+%             
+%             continue;
+%         end          
         
-        if (props.Area < 3000)
+        if (props.Area < 4000)
             if Debug == 1
                 fprintf('Object failed Area -> %f\n', props.Area);
             end
@@ -60,7 +60,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
 
         WHRatio = BB(3) / BB(4);
         
-        if (WHRatio < 0.45 || WHRatio > 1)
+        if (WHRatio < 0.45 || WHRatio > 1.1)
             if Debug == 1
                 fprintf('Object failed Width to Height Ratio -> %f\n', WHRatio);
             end
@@ -107,18 +107,20 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
            
         end
         
-        fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
-        fprintf('Object has Solidity = %f, Rectangularity = %f\n', props.Solidity, Rectangularity);
+        if Debug == 1
+            fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
+            fprintf('Object has Solidity = %f, Rectangularity = %f\n', props.Solidity, Rectangularity);
+        end
         
         BB_BW = zeros(size(L));
 
-        for x = 0 : uint16(BB(3))
-            for y = 0 : uint16(BB(4))
+        for x = 1 : floor(BB(3))
+            for y = 1 : floor(BB(4))
 
-                BB_BW(uint16(BB(2)) + y, uint16(BB(1)) + x) = 1;
+                BB_BW(floor(BB(2)) + y, floor(BB(1)) + x) = 1;
             end
         end
-
+        
         New_BW = New_BW & ~(Reg & BB_BW);  
 
         BBx(:,:,NBB + 1) = BB_BW;
