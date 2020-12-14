@@ -90,7 +90,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
         
-        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.1)
+        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.05)
             if Debug == 1
                 fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
             end
