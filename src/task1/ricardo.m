@@ -6,33 +6,29 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 13 : 13
+for ImageIndex = 2 : 2
     
-ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
+RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
     figure;
-    subplot(2, 6, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+    subplot(2, 6, 1), imshow(RGBOriginal, 'InitialMagnification', 'fit'), title('Original');
 end
 
 %% Fase 1 - Pre processing (Gaussian filter)
 
-ImgRGB = imgaussfilt(ImgRGBOriginal, 10);
+RGB = imgaussfilt(RGBOriginal, 10);
 
 if ShowPlots == 1
-    subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
+    subplot(2, 6, 2), imshow(RGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 end
 
-
-%% Fase 2 - Detect skin tone
-
 %Isolate R. 
-R = ImgRGB(:,:,1);
+R = RGB(:,:,1);
 %Isolate G. 
-G = ImgRGB(:,:,2);
+G = RGB(:,:,2);
 %Isolate B. 
-B = ImgRGB(:,:,3);
-
+B = RGB(:,:,3);
 
 %% Color Balance
 
@@ -42,21 +38,21 @@ r = R * (K / mean(R(:))) ;
 g = G * (K / mean(G(:))) ;
 b = B * (K / mean(B(:))) ;
 
-Normal = cat(3, r, g, b);
+RGBNormal = cat(3, r, g, b);
 
-subplot(2, 6, 3), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Compensation');
+subplot(2, 6, 3), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Compensation');
 
 %% Remove Trash
 
-I = Normal;
+I = RGBNormal;
 N = 7;
 
 [L,Centers] = imsegkmeans(I, N);
 
-Out = zeros(size(rgb2gray(I)));
+Out = zeros(size(R));
 
 for i = 1 : N
-    Reg = (L==i);
+    Reg = (L == i);
     Avg = mean(Centers(i, :));
 
     if Avg < 80
@@ -66,17 +62,24 @@ end
 
 subplot(2, 6, 4), imshow(Out, [], 'InitialMagnification', 'fit'), title('Trash');
 
-R(Out==1) = 0;
-G(Out==1) = 0;
-B(Out==1) = 0;
-Normal = cat(3, R, G, B);
- 
-subplot(2, 6, 5), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+R2 = I(:,:,1);
+G2 = I(:,:,2);
+B2 = I(:,:,3);
 
+R2(Out==1) = 0;
+G2(Out==1) = 0;
+B2(Out==1) = 0;
+
+RGBNormal = cat(3, R2, G2, B2);
  
+subplot(2, 6, 5), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+
+
+%% Fase 2 - Detect skin tone
+
 %% YCbCr
 
-ImgYCbCr = rgb2ycbcr(Normal);
+ImgYCbCr = rgb2ycbcr(RGBNormal);
 
 %Isolate Y. 
 Y = ImgYCbCr(:,:,1);
@@ -85,37 +88,40 @@ Cb = ImgYCbCr(:,:,2);
 %Isolate Cr. 
 Cr = ImgYCbCr(:,:,3);
 
-%% HSV
-
-ImgHSV = rgb2hsv(ImgRGB);
-%Isolate H. 
-H = ImgHSV(:,:,1);
-%Isolate S. 
-S = ImgHSV(:,:,2);
-%Isolate V. 
-V = ImgHSV(:,:,3);
 
 %% Thresholds
 
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.718.1964&rep=rep1&type=pdf
 
-MaskRGB = (R > 95) & (G > 40) & (B > 20) & ((max(max(R,G), B) - min(min(R,G), B)) > 15) & (imabsdiff(R, G) > 15)  & (R > G) & (R > B);
-MaskRGB2 = (R > 220) & (G > 210) & (B > 170) & (imabsdiff(R,G) <= 15) & (R > B) & (G > B);
+I = RGBNormal;
+R2 = I(:,:,1);
+G2 = I(:,:,2);
+B2 = I(:,:,3);
+
+MaskRGB = (R2 > 95) & (G2 > 40) & (B2 > 20) & ((max(max(R2,G2), B2) - min(min(R2,G2), B2)) > 15) & (imabsdiff(R2, G2) > 15)  & (R2 > G2) & (R2 > B2);
+MaskRGB2 = (R2 > 220) & (G2 > 210) & (B2 > 170) & (imabsdiff(R2,G2) <= 15) & (R2 > B2) & (G2 > B2);
 
 MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069) & (Cr >= -1.005 * double(Cb) + 234.5652) & (Cr <= -1.15 * double(Cb) + 301.75) & (Cr <= -2.2857 * double(Cb) + 432.85);
-MaskHSV = H < (50 / 360) | H > (230 / 360);
 
-MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
+MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr;
 
 if ShowPlots == 1
-    R = ImgRGBOriginal(:,:,1);
-    G = ImgRGBOriginal(:,:,2);
-    B = ImgRGBOriginal(:,:,3);
+    figure;
     
-    R(MaskSkin==0) = 0;
-    G(MaskSkin==0) = 0;
-    B(MaskSkin==0) = 0;
-    Pele = cat(3, R, G, B);
+    subplot(1, 4, 1), imshow(MaskRGB | MaskRGB2);
+    subplot(1, 4, 2), imshow(MaskYCbCr);
+    subplot(1, 4, 4), imshow(MaskSkin);
+    
+    figure;
+    
+    R2 = RGBOriginal(:,:,1);
+    G2 = RGBOriginal(:,:,2);
+    B2 = RGBOriginal(:,:,3);
+    
+    R2(MaskSkin==0) = 0;
+    G2(MaskSkin==0) = 0;
+    B2(MaskSkin==0) = 0;
+    Pele = cat(3, R2, G2, B2);
     
     subplot(2, 6, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
 end
@@ -135,7 +141,7 @@ MaskSkin = imopen(MaskSkin, strel('disk', 10));
 %% Fase 3 - Iterative method
 
 
-ImgRGB_BB = ImgRGBOriginal;
+ImgRGB_BB = RGBOriginal;
 
 Mask = MaskSkin;
 

@@ -24,12 +24,18 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         
         NullThickness = 0.01;
         if (C(1) < NullThickness*Size(1) || C(1) > (1 - NullThickness)*Size(1))
-            fprintf('Object failed: Outside valid region\n');
+            if Debug == 1
+                fprintf('Object failed: Outside valid region\n');
+            end
+            
             continue
         end
         
         if (C(2) < NullThickness*Size(2) || C(2) > (1 - NullThickness)*Size(2))
-            fprintf('Object failed: Outside valid region\n');
+            if Debug == 1
+                fprintf('Object failed: Outside valid region\n');
+            end
+            
             continue
         end
         
