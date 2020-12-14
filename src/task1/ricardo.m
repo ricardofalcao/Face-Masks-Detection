@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 19 : 19
+for ImageIndex = 2 : 2
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -17,11 +17,12 @@ end
 
 %% Fase 1 - Pre processing (Gaussian filter)
 
-ImgRGB = imgaussfilt(ImgRGBOriginal, 5);
+ImgRGB = imgaussfilt(ImgRGBOriginal, 10);
 
 if ShowPlots == 1
     subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 end
+
 
 %% Fase 2 - Detect skin tone
 
@@ -32,13 +33,20 @@ G = ImgRGB(:,:,2);
 %Isolate B. 
 B = ImgRGB(:,:,3);
 
-%Isolate r
-r = R ./ (R + G + B);
 
-%Isolate r
-g = G ./ (R + G + B);
+%% Color Balance
 
-ImgYCbCr = rgb2ycbcr(ImgRGB);
+K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
+
+R = R * (K / mean(R(:))) ;
+G = G * (K / mean(G(:))) ;
+B = B * (K / mean(B(:))) ;
+
+Normal = cat(3, R, G, B);
+
+%% YCbCr
+
+ImgYCbCr = rgb2ycbcr(Normal);
 
 %Isolate Y. 
 Y = ImgYCbCr(:,:,1);
@@ -47,14 +55,17 @@ Cb = ImgYCbCr(:,:,2);
 %Isolate Cr. 
 Cr = ImgYCbCr(:,:,3);
 
+%% HSV
+
 ImgHSV = rgb2hsv(ImgRGB);
-ans
 %Isolate H. 
 H = ImgHSV(:,:,1);
 %Isolate S. 
 S = ImgHSV(:,:,2);
 %Isolate V. 
 V = ImgHSV(:,:,3);
+
+%% Thresholds
 
 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.718.1964&rep=rep1&type=pdf
 
@@ -65,71 +76,38 @@ MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069)
 MaskHSV = H < (50 / 360) | H > (230 / 360);
 
 MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
+
 if ShowPlots == 1
-    subplot(2, 6, 3), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Pele');
+    R = ImgRGBOriginal(:,:,1);
+    G = ImgRGBOriginal(:,:,2);
+    B = ImgRGBOriginal(:,:,3);
+    
+    R(MaskSkin==0) = 0;
+    G(MaskSkin==0) = 0;
+    B(MaskSkin==0) = 0;
+    Pele = cat(3, R, G, B);
+    
+    subplot(2, 6, 3), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
 end
 
-MaskSkin = purgesmallregions(MaskSkin);
 if ShowPlots == 1
-    subplot(2, 6, 4), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small');
-end
-
-%Mask = imclose(Mask, ones(10));
-%subplot(2, 6, 5), imshow(Mask, 'InitialMagnification', 'fit'), title('Mask - Close');
-
-MaskEdge = edge(Y, 'Canny', [], 10);
-
-MaskEdge = imclose(MaskEdge, strel('disk', 50));
-
-MaskEdge = imfill(MaskEdge, 'holes');
-
-if ShowPlots == 1
-    subplot(2, 6, 6); imshow(MaskEdge, 'InitialMagnification', 'fit'), title('Mask - Edge');
-end
-
-MaskSkin = MaskSkin & MaskEdge;
-if ShowPlots == 1
-    subplot(2, 6, 7), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - With Edge');
-end
-
-MaskSkin = purgesmallregions(MaskSkin);
-
-if ShowPlots == 1
-    subplot(2, 6, 8), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Mask - Purge small regions');
+    subplot(2, 6, 4), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
 
-if ShowPlots == 1
-    subplot(2, 6, 9), imshow(MaskSkin, 'InitialMagnification', 'fit'), title('Open');
-end
-
-
-%% Transformada Para Matar Pontes
-
-% figure;
-
-% D = bwdist(~imfill(MaskSkin, 'holes'));
-% D = bwdist(~MaskSkin);
-% subplot(2,2,1), imshow(D,[], 'InitialMagnification', 'fit'), title('BwDist');
+% MaskSkin = bwconvhull(MaskSkin, 'objects');
 % 
-% DMask = D > mean(nonzeros(D(:)));
-% subplot(2,2,2), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Threshold');
-% 
-% DMask = imfill(DMask, 'holes');
-% subplot(2,2,3), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Fill');
+% if ShowPlots == 1
+%     subplot(2, 6, 5), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+% end
 
-% DMask = imerode(DMask, strel('disk', 10));
-% subplot(2,2,4), imshow(DMask,[], 'InitialMagnification', 'fit'), title('Erosion');
-
-
-%% Fase 3 - Bounding boxes
+%% Fase 3 - Iterative method
 
 
 ImgRGB_BB = ImgRGBOriginal;
 
 Mask = MaskSkin;
-% Mask = DMask;
 
 if ShowPlots == 1
     figure;
@@ -162,21 +140,13 @@ FN = zeros(GT_Len);
 maxArea = 0;
 
 for i = 0 : 13
-
-    %Mask = hull_boundary(Mask);
-    
-    if ShowPlots == 1 %&& i == 0
+    if ShowPlots == 1
         fprintf("Iteration %d\n", i+1);
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
     [BB1, NFaces, Mask, L, new_maxArea] = extractfaces(Mask, maxArea);
-    
     maxArea = new_maxArea;
-    
-    if ShowPlots == 1 && i > 0
-        %subplot(3, 5, i + 1), imshow(L,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
-    end
 
     for j = 1 : NFaces
         Face = BB1(:,:,j);
@@ -208,15 +178,21 @@ for i = 0 : 13
     Test = Y;
     Test(~Mask) = 0;
     
-    Edge = edge(Test, 'canny', []);
-    Edge = imclose(Edge, strel('disk', 5));
+    EdgeBig = edge(Test, 'Canny', [], 10);
+    Edge = imclose(EdgeBig, strel('disk', 100));    
+    Edge = imfill(Edge, 'holes');
+
+    Mask = Mask & Edge;
     
-    Mask = Mask & (~Edge);
+    EdgeSmall = edge(Test, 'Canny', []);
+    Edge = imclose(EdgeSmall, strel('disk', 5));
+    
+    Mask = Mask & ~Edge;
     
     Mask = imfill(Mask, 'holes');
-    Mask = imerode(Mask, ones(3));
+    Mask = imerode(Mask, ones(5));
     
-    Mask = purgesmallregions(Mask);
+    Mask = purgesmallregions(Mask, 0.75);
     
     if ShowPlots == 1
         fprintf("\n");
@@ -231,3 +207,71 @@ end
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 end
+
+%% K MEANS
+
+close all;
+clear;
+
+GT_Store = load('data/ground_truth.mat');
+GT_Array = GT_Store.ground_truth_store;
+
+for ImageIndex = 5 : 5
+
+    ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
+
+%     figure;
+
+    ImgRGB = imgaussfilt(ImgRGBOriginal, 5);
+    % ImgRGB = ImgRGBOriginal;
+
+    R = ImgRGB(:,:,1);
+    G = ImgRGB(:,:,2);
+    B = ImgRGB(:,:,3);
+
+    K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
+
+    R = R * (K / mean(R(:))) ;
+    G = G * (K / mean(G(:))) ;
+    B = B * (K / mean(B(:))) ;
+
+    Normal = cat(3, R, G, B);
+
+    subplot(2, 2, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+    subplot(2, 2, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gauss');
+    subplot(2, 2, 3), imshow(Normal, 'InitialMagnification', 'fit'), title('Compensation');
+
+    I = Normal;
+    N = 7;
+
+    [L,Centers] = imsegkmeans(I, N);
+    B = labeloverlay(I,L);
+    subplot(2, 2, 4), imshow(B, 'InitialMagnification', 'fit'), title('Labeled');
+
+    Out = zeros(size(rgb2gray(B)));
+
+    figure;
+
+    for i = 1 : N
+
+        Reg = (L==i);
+        Avg = mean(Centers(i, :));
+
+        R = Centers(i, 1);
+        G = Centers(i, 2);
+        B = Centers(i, 3);
+
+        fprintf('Region %d -> Avg = %f\n', i, Avg);
+        subplot(3, 4, i), imshow(Reg);
+
+
+        if Avg < 100 && Avg > 220
+            fprintf('Region %d Passed\n', i);
+            Out = Out | Reg;
+        end
+
+    end
+
+    subplot(3,4,11), imshow(Out, [], 'InitialMagnification', 'fit'), title('Final');
+end
+

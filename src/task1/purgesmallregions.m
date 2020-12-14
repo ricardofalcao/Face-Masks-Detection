@@ -1,4 +1,4 @@
-function Out = purgesmallregions(BW)
+function Out = purgesmallregions(BW, Thresh)
     [Reg, N] = bwlabel(BW);
     Area = zeros(N,1);
 
@@ -10,7 +10,7 @@ function Out = purgesmallregions(BW)
     Out = zeros(size(BW));
 
     for i = 1:N
-       if Area(i) >= RegAvg % *(0.25)
+       if Area(i) >= RegAvg * Thresh
            Zone = (Reg == i);
            Out = Out | Zone;
        end
