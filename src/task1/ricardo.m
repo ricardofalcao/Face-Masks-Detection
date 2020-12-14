@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 2 : 2
+for ImageIndex = 13 : 13
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -38,12 +38,42 @@ B = ImgRGB(:,:,3);
 
 K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
 
-R = R * (K / mean(R(:))) ;
-G = G * (K / mean(G(:))) ;
-B = B * (K / mean(B(:))) ;
+r = R * (K / mean(R(:))) ;
+g = G * (K / mean(G(:))) ;
+b = B * (K / mean(B(:))) ;
 
+Normal = cat(3, r, g, b);
+
+subplot(2, 6, 3), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Compensation');
+
+%% Remove Trash
+
+I = Normal;
+N = 7;
+
+[L,Centers] = imsegkmeans(I, N);
+
+Out = zeros(size(rgb2gray(I)));
+
+for i = 1 : N
+    Reg = (L==i);
+    Avg = mean(Centers(i, :));
+
+    if Avg < 80
+        Out = Out | Reg;
+    end
+end
+
+subplot(2, 6, 4), imshow(Out, [], 'InitialMagnification', 'fit'), title('Trash');
+
+R(Out==1) = 0;
+G(Out==1) = 0;
+B(Out==1) = 0;
 Normal = cat(3, R, G, B);
+ 
+subplot(2, 6, 5), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
 
+ 
 %% YCbCr
 
 ImgYCbCr = rgb2ycbcr(Normal);
@@ -87,11 +117,11 @@ if ShowPlots == 1
     B(MaskSkin==0) = 0;
     Pele = cat(3, R, G, B);
     
-    subplot(2, 6, 3), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
+    subplot(2, 6, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
 end
 
 if ShowPlots == 1
-    subplot(2, 6, 4), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+    subplot(2, 6, 7), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
@@ -99,7 +129,7 @@ MaskSkin = imopen(MaskSkin, strel('disk', 10));
 % MaskSkin = bwconvhull(MaskSkin, 'objects');
 % 
 % if ShowPlots == 1
-%     subplot(2, 6, 5), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+%     subplot(2, 6, 8), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 % end
 
 %% Fase 3 - Iterative method
@@ -139,7 +169,7 @@ FN = zeros(GT_Len);
 
 maxArea = 0;
 
-for i = 0 : 13
+for i = 0 : 6
     if ShowPlots == 1
         fprintf("Iteration %d\n", i+1);
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
@@ -207,71 +237,3 @@ end
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 end
-
-%% K MEANS
-
-close all;
-clear;
-
-GT_Store = load('data/ground_truth.mat');
-GT_Array = GT_Store.ground_truth_store;
-
-for ImageIndex = 5 : 5
-
-    ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
-
-%     figure;
-
-    ImgRGB = imgaussfilt(ImgRGBOriginal, 5);
-    % ImgRGB = ImgRGBOriginal;
-
-    R = ImgRGB(:,:,1);
-    G = ImgRGB(:,:,2);
-    B = ImgRGB(:,:,3);
-
-    K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
-
-    R = R * (K / mean(R(:))) ;
-    G = G * (K / mean(G(:))) ;
-    B = B * (K / mean(B(:))) ;
-
-    Normal = cat(3, R, G, B);
-
-    subplot(2, 2, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
-    subplot(2, 2, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gauss');
-    subplot(2, 2, 3), imshow(Normal, 'InitialMagnification', 'fit'), title('Compensation');
-
-    I = Normal;
-    N = 7;
-
-    [L,Centers] = imsegkmeans(I, N);
-    B = labeloverlay(I,L);
-    subplot(2, 2, 4), imshow(B, 'InitialMagnification', 'fit'), title('Labeled');
-
-    Out = zeros(size(rgb2gray(B)));
-
-    figure;
-
-    for i = 1 : N
-
-        Reg = (L==i);
-        Avg = mean(Centers(i, :));
-
-        R = Centers(i, 1);
-        G = Centers(i, 2);
-        B = Centers(i, 3);
-
-        fprintf('Region %d -> Avg = %f\n', i, Avg);
-        subplot(3, 4, i), imshow(Reg);
-
-
-        if Avg < 100 && Avg > 220
-            fprintf('Region %d Passed\n', i);
-            Out = Out | Reg;
-        end
-
-    end
-
-    subplot(3,4,11), imshow(Out, [], 'InitialMagnification', 'fit'), title('Final');
-end
-
