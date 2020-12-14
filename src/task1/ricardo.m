@@ -6,13 +6,13 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 13 : 13
+for ImageIndex = 4 : 4
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
     figure;
-    subplot(2, 6, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+    subplot(2, 4, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
 end
 
 %% Fase 1 - Pre processing (Gaussian filter)
@@ -20,7 +20,7 @@ end
 ImgRGB = imgaussfilt(ImgRGBOriginal, 10);
 
 if ShowPlots == 1
-    subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
+    subplot(2, 4, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 end
 
 
@@ -44,7 +44,9 @@ b = B * (K / mean(B(:))) ;
 
 Normal = cat(3, r, g, b);
 
-subplot(2, 6, 3), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Compensation');
+if ShowPlots == 1
+subplot(2, 4, 3), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Compensation');
+end
 
 %% Remove Trash
 
@@ -64,14 +66,18 @@ for i = 1 : N
     end
 end
 
-subplot(2, 6, 4), imshow(Out, [], 'InitialMagnification', 'fit'), title('Trash');
+if ShowPlots == 1
+subplot(2, 4, 4), imshow(Out, [], 'InitialMagnification', 'fit'), title('Trash');
+end
 
 R(Out==1) = 0;
 G(Out==1) = 0;
 B(Out==1) = 0;
 Normal = cat(3, R, G, B);
- 
-subplot(2, 6, 5), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+
+if ShowPlots == 1
+subplot(2, 4, 5), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+end
 
  
 %% YCbCr
@@ -107,21 +113,22 @@ MaskHSV = H < (50 / 360) | H > (230 / 360);
 
 MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
 
-if ShowPlots == 1
-    R = ImgRGBOriginal(:,:,1);
-    G = ImgRGBOriginal(:,:,2);
-    B = ImgRGBOriginal(:,:,3);
-    
-    R(MaskSkin==0) = 0;
-    G(MaskSkin==0) = 0;
-    B(MaskSkin==0) = 0;
-    Pele = cat(3, R, G, B);
-    
-    subplot(2, 6, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
+
+R = ImgRGBOriginal(:,:,1);
+G = ImgRGBOriginal(:,:,2);
+B = ImgRGBOriginal(:,:,3);
+
+R(MaskSkin==0) = 0;
+G(MaskSkin==0) = 0;
+B(MaskSkin==0) = 0;
+Pele = cat(3, R, G, B);
+
+if ShowPlots == 1    
+    subplot(2, 4, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
 end
 
 if ShowPlots == 1
-    subplot(2, 6, 7), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+    subplot(2, 4, 7), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
@@ -129,7 +136,7 @@ MaskSkin = imopen(MaskSkin, strel('disk', 10));
 % MaskSkin = bwconvhull(MaskSkin, 'objects');
 % 
 % if ShowPlots == 1
-%     subplot(2, 6, 8), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+%     subplot(2, 4, 8), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 % end
 
 %% Fase 3 - Iterative method
@@ -169,10 +176,10 @@ FN = zeros(GT_Len);
 
 maxArea = 0;
 
-for i = 0 : 6
+for i = 0 : 8
     if ShowPlots == 1
         fprintf("Iteration %d\n", i+1);
-        subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+        subplot(2, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
     end
     
     [BB1, NFaces, Mask, L, new_maxArea] = extractfaces(Mask, maxArea);
@@ -205,22 +212,22 @@ for i = 0 : 6
     end
 
     
-    Test = Y;
-    Test(~Mask) = 0;
-    
-    EdgeBig = edge(Test, 'Canny', [], 10);
-    Edge = imclose(EdgeBig, strel('disk', 100));    
-    Edge = imfill(Edge, 'holes');
-
-    Mask = Mask & Edge;
-    
-    EdgeSmall = edge(Test, 'Canny', []);
-    Edge = imclose(EdgeSmall, strel('disk', 5));
-    
-    Mask = Mask & ~Edge;
-    
-    Mask = imfill(Mask, 'holes');
-    Mask = imerode(Mask, ones(5));
+%     Test = Y;
+%     Test(~Mask) = 0;
+%     
+%     EdgeBig = edge(Test, 'Canny', [], 10);
+%     Edge = imclose(EdgeBig, strel('disk', 100));    
+%     Edge = imfill(Edge, 'holes');
+% 
+%     Mask = Mask & Edge;
+%     
+%     EdgeSmall = edge(Test, 'Canny', []);
+%     Edge = imclose(EdgeSmall, strel('disk', 5));
+%     
+%     Mask = Mask & ~Edge;
+%     
+%     Mask = imfill(Mask, 'holes');
+    Mask = imerode(Mask, strel('disk', 5));
     
     Mask = purgesmallregions(Mask, 0.75);
     
@@ -231,7 +238,7 @@ for i = 0 : 6
 end
 
 if ShowPlots == 1
-    subplot(3, 5, 15), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
+    subplot(2, 5, 10), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
 end
 
 FN = length(FN) - nnz(FN);
