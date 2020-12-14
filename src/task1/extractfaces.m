@@ -68,7 +68,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
 
         WHRatio = BB(3) / BB(4);
         
-        if (WHRatio < 0.45 || WHRatio > 1.1)
+        if (WHRatio < 0.48 || WHRatio > 1.1)
             if Debug == 1
                 fprintf('Object failed Width to Height Ratio -> %f\n', WHRatio);
             end
@@ -96,7 +96,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
         
-        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.05)
+        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.1)
             if Debug == 1
                 fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
             end
