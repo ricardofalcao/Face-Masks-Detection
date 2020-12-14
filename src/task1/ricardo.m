@@ -17,7 +17,7 @@ end
 
 %% Fase 1 - Pre processing (Gaussian filter)
 
-ImgRGB = imgaussfilt(ImgRGBOriginal, 5);
+ImgRGB = imgaussfilt(ImgRGBOriginal, 10);
 
 if ShowPlots == 1
     subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
@@ -95,6 +95,12 @@ end
 
 MaskSkin = imopen(MaskSkin, strel('disk', 10));
 
+% MaskSkin = bwconvhull(MaskSkin, 'objects');
+% 
+% if ShowPlots == 1
+%     subplot(2, 6, 5), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+% end
+
 %% Fase 3 - Iterative method
 
 
@@ -132,7 +138,7 @@ FN = zeros(GT_Len);
 
 maxArea = 0;
 
-for i = 0 : 7
+for i = 0 : 13
     if ShowPlots == 1
         fprintf("Iteration %d\n", i+1);
         subplot(3, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');

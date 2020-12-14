@@ -33,7 +33,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue
         end
         
-        if (props.Solidity < 0.65 || props.Solidity > 1)
+        if (props.Solidity < 0.5 || props.Solidity > 1)
             if Debug == 1
                 fprintf('Object failed Solidity -> %f\n', props.Solidity);
             end
@@ -51,7 +51,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
 %             continue;
 %         end          
         
-        if (props.Area < 4100)
+        if (props.Area < 5000)
             if Debug == 1
                 fprintf('Object failed Area -> %f\n', props.Area);
             end
@@ -74,7 +74,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         convex = regionprops(props.ConvexImage, 'Eccentricity');
         
         o = abs(filled.Orientation);
-        if (o <= 40)
+        if (o <= 35)
             if Debug == 1
                 fprintf('Object failed Orientation -> %f\n', filled.Orientation);
             end
