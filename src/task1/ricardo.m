@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 8 : 8
+for ImageIndex = 2 : 2
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -178,16 +178,15 @@ for i = 0 : 13
     Test(~Mask) = 0;
     
     EdgeBig = edge(Test, 'Canny', [], 10);
-    EdgeBig = imclose(EdgeBig, strel('disk', 100));    
-    EdgeBig = imfill(EdgeBig, 'holes');
-
-    Mask = Mask & EdgeBig;
-    
-    Edge = edge(Test, 'canny', []);
-    Edge = imclose(Edge, strel('disk', 5));
+    Edge = imclose(EdgeBig, strel('disk', 100));    
     Edge = imfill(Edge, 'holes');
-    
+
     Mask = Mask & Edge;
+    
+    EdgeSmall = edge(Test, 'Canny', []);
+    Edge = imclose(EdgeSmall, strel('disk', 5));
+    
+    Mask = Mask & ~Edge;
     
     Mask = imfill(Mask, 'holes');
     Mask = imerode(Mask, ones(5));
