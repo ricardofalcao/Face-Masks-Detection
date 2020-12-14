@@ -4,23 +4,25 @@ clear;
 GT_Store = load('data/ground_truth.mat');
 GT_Array = GT_Store.ground_truth_store;
 
-ShowPlots = 1;
+ShowPlots = 0;
 
-for ImageIndex = 2 : 2
+for ImageIndex = 1 : 20
     
 RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
 if ShowPlots == 1
     figure;
-    subplot(2, 4, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+    
+    subplot(2, 4, 1), imshow(RGBOriginal, 'InitialMagnification', 'fit'), title('Original');
 end
 
 %% Fase 1 - Pre processing (Gaussian filter)
 
-RGB = imgaussfilt(RGBOriginal, 10);
+RGB = imgaussfilt(RGBOriginal, 5);
+Gray = rgb2gray(RGB);
 
 if ShowPlots == 1
-    subplot(2, 4, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
+    subplot(2, 4, 2), imshow(RGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 end
 
 %Isolate R. 
@@ -41,7 +43,7 @@ b = B * (K / mean(B(:))) ;
 RGBNormal = cat(3, r, g, b);
 
 if ShowPlots == 1
-subplot(2, 4, 3), imshow(Normal, [], 'InitialMagnification', 'fit'), title('Compensation');
+    subplot(2, 4, 3), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Compensation');
 end
 
 %% Remove Trash
@@ -51,32 +53,34 @@ N = 7;
 
 [L,Centers] = imsegkmeans(I, N);
 
-Out = zeros(size(R));
+KOut = zeros(size(R));
 
 for i = 1 : N
     Reg = (L == i);
     Avg = mean(Centers(i, :));
 
     if Avg < 80
-        Out = Out | Reg;
+        KOut = KOut | Reg;
     end
 end
 
 if ShowPlots == 1
-subplot(2, 4, 4), imshow(Out, [], 'InitialMagnification', 'fit'), title('Trash');
+    subplot(2, 4, 5), imshow(KOut, [], 'InitialMagnification', 'fit'), title('Trash');
 end
 
 R2 = I(:,:,1);
 G2 = I(:,:,2);
 B2 = I(:,:,3);
 
-R2(Out==1) = 0;
-G2(Out==1) = 0;
-B2(Out==1) = 0;
+R2(KOut==1) = 0;
+G2(KOut==1) = 0;
+B2(KOut==1) = 0;
 
 RGBNormal = cat(3, R2, G2, B2);
  
-subplot(2, 6, 5), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+if ShowPlots == 1
+    subplot(2, 4, 6), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+end
 
 
 %% Fase 2 - Detect skin tone
@@ -127,14 +131,16 @@ if ShowPlots == 1
     B2(MaskSkin==0) = 0;
     Pele = cat(3, R2, G2, B2);
     
-    subplot(2, 6, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
+    % subplot(2, 6, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
 end
 
 if ShowPlots == 1
     subplot(2, 4, 7), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
 end
 
-MaskSkin = imopen(MaskSkin, strel('disk', 10));
+MaskSkin = imclose(MaskSkin, strel('disk', 10));
+MaskSkin = imfill(MaskSkin, 'holes');
+MaskSkin = purgesmallregions(MaskSkin, 0.4);
 
 %% Fase 3 - Iterative method
 
@@ -209,21 +215,15 @@ for i = 0 : 8
     end
 
     
-%     Test = Y;
-%     Test(~Mask) = 0;
-%     
-%     EdgeBig = edge(Test, 'Canny', [], 10);
-%     Edge = imclose(EdgeBig, strel('disk', 100));    
-%     Edge = imfill(Edge, 'holes');
-% 
-%     Mask = Mask & Edge;
-%     
-%     EdgeSmall = edge(Test, 'Canny', []);
-%     Edge = imclose(EdgeSmall, strel('disk', 5));
-%     
-%     Mask = Mask & ~Edge;
-%     
-%     Mask = imfill(Mask, 'holes');
+    Test = Y;
+    Test(~Mask) = 0;  
+
+    EdgeSmall = edge(Test, 'Canny', []);
+    Edge = imclose(EdgeSmall, strel('disk', 5));
+    
+    Mask = Mask & ~Edge;
+    
+    Mask = imfill(Mask, 'holes');
     Mask = imerode(Mask, strel('disk', 5));
     
     Mask = purgesmallregions(Mask, 0.75);

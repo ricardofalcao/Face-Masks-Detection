@@ -1,5 +1,5 @@
 function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
-    Debug = 1;
+    Debug = 0;
     
     new_maxArea = maxArea;
     
@@ -49,13 +49,13 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         
          Rectangularity = props.Area / (BB(3)*BB(4));
          
-%          if (Rectangularity < 0.5 || Rectangularity > 0.8)
-%             if Debug == 1
-%                 fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
-%             end
-%             
-%             continue;
-%         end          
+         if (Rectangularity < 0.45 || Rectangularity > 0.8)
+            if Debug == 1
+                fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
+            end
+            
+            continue;
+        end          
         
         if (props.Area < 5000)
             if Debug == 1
@@ -76,13 +76,13 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
         
-        filled = regionprops(props.FilledImage, 'Eccentricity', 'Orientation', 'MajorAxisLength', 'MinorAxisLength');
-        convex = regionprops(props.ConvexImage, 'Eccentricity');
+        filled = regionprops(props.FilledImage, 'Eccentricity', 'MajorAxisLength', 'MinorAxisLength');
+        convex = regionprops(props.ConvexImage, 'Eccentricity', 'Orientation');
         
-        o = abs(filled.Orientation);
-        if (o <= 35)
+        o = abs(convex.Orientation);
+        if (o <= 15)
             if Debug == 1
-                fprintf('Object failed Orientation -> %f\n', filled.Orientation);
+                fprintf('Object failed Orientation -> %f\n', convex.Orientation);
             end
             
             continue;
@@ -116,7 +116,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         end
         
         if Debug == 1
-            fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', filled.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
+            fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', convex.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
             fprintf('Object has Solidity = %f, Rectangularity = %f\n', props.Solidity, Rectangularity);
         end
         
