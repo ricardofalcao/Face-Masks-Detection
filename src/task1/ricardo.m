@@ -6,7 +6,7 @@ GT_Array = GT_Store.ground_truth_store;
 
 ShowPlots = 1;
 
-for ImageIndex = 9 : 9
+for ImageIndex = 8 : 8
     
 ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -37,12 +37,11 @@ B = ImgRGB(:,:,3);
 
 K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
 
-R = R * (K / mean(R(:))) ;
-G = G * (K / mean(G(:))) ;
-B = B * (K / mean(B(:))) ;
+r = R * (K / mean(R(:))) ;
+g = G * (K / mean(G(:))) ;
+b = B * (K / mean(B(:))) ;
 
-Normal = cat(3, R, G, B);
-
+Normal = cat(3, r, g, b);
 
 %% YCbCr
 
@@ -57,8 +56,7 @@ Cr = ImgYCbCr(:,:,3);
 
 %% HSV
 
-ImgHSV = rgb2hsv(Normal);
-ans
+ImgHSV = rgb2hsv(ImgRGB);
 %Isolate H. 
 H = ImgHSV(:,:,1);
 %Isolate S. 
@@ -77,6 +75,7 @@ MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069)
 MaskHSV = H < (50 / 360) | H > (230 / 360);
 
 MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr & MaskHSV;
+
 if ShowPlots == 1
     R = ImgRGBOriginal(:,:,1);
     G = ImgRGBOriginal(:,:,2);
@@ -179,9 +178,10 @@ for i = 0 : 7
     Mask = Mask & EdgeBig;
     
     Edge = edge(Test, 'canny', []);
-    Edge = imclose(Edge, strel('disk', 2));
+    Edge = imclose(Edge, strel('disk', 5));
+    Edge = imfill(Edge, 'holes');
     
-    Mask = Mask & (~Edge);
+    Mask = Mask & Edge;
     
     Mask = imfill(Mask, 'holes');
     Mask = imerode(Mask, ones(5));
