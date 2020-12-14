@@ -23,6 +23,7 @@ if ShowPlots == 1
     subplot(2, 6, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 end
 
+
 %% Fase 2 - Detect skin tone
 
 %Isolate R. 
@@ -37,11 +38,11 @@ B = ImgRGB(:,:,3);
 
 K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
 
-r = R * (K / mean(R(:))) ;
-g = G * (K / mean(G(:))) ;
-b = B * (K / mean(B(:))) ;
+R = R * (K / mean(R(:))) ;
+G = G * (K / mean(G(:))) ;
+B = B * (K / mean(B(:))) ;
 
-Normal = cat(3, r, g, b);
+Normal = cat(3, R, G, B);
 
 %% YCbCr
 
@@ -206,3 +207,71 @@ end
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 end
+
+%% K MEANS
+
+close all;
+clear;
+
+GT_Store = load('data/ground_truth.mat');
+GT_Array = GT_Store.ground_truth_store;
+
+for ImageIndex = 5 : 5
+
+    ImgRGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
+
+%     figure;
+
+    ImgRGB = imgaussfilt(ImgRGBOriginal, 5);
+    % ImgRGB = ImgRGBOriginal;
+
+    R = ImgRGB(:,:,1);
+    G = ImgRGB(:,:,2);
+    B = ImgRGB(:,:,3);
+
+    K = (mean(R(:)) + mean(G(:)) + mean(B(:))) / 3;
+
+    R = R * (K / mean(R(:))) ;
+    G = G * (K / mean(G(:))) ;
+    B = B * (K / mean(B(:))) ;
+
+    Normal = cat(3, R, G, B);
+
+    subplot(2, 2, 1), imshow(ImgRGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+    subplot(2, 2, 2), imshow(ImgRGB, 'InitialMagnification', 'fit'), title('Gauss');
+    subplot(2, 2, 3), imshow(Normal, 'InitialMagnification', 'fit'), title('Compensation');
+
+    I = Normal;
+    N = 7;
+
+    [L,Centers] = imsegkmeans(I, N);
+    B = labeloverlay(I,L);
+    subplot(2, 2, 4), imshow(B, 'InitialMagnification', 'fit'), title('Labeled');
+
+    Out = zeros(size(rgb2gray(B)));
+
+    figure;
+
+    for i = 1 : N
+
+        Reg = (L==i);
+        Avg = mean(Centers(i, :));
+
+        R = Centers(i, 1);
+        G = Centers(i, 2);
+        B = Centers(i, 3);
+
+        fprintf('Region %d -> Avg = %f\n', i, Avg);
+        subplot(3, 4, i), imshow(Reg);
+
+
+        if Avg < 100 && Avg > 220
+            fprintf('Region %d Passed\n', i);
+            Out = Out | Reg;
+        end
+
+    end
+
+    subplot(3,4,11), imshow(Out, [], 'InitialMagnification', 'fit'), title('Final');
+end
+
