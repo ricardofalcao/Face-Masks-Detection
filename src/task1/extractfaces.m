@@ -14,14 +14,16 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
     
     for k = 1 : N
         Reg = (L == k);
-                
-        if Debug == 1
-            fprintf('Region %d\n', k);
-        end
 
-        props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area', 'Solidity', 'Centroid');
+        props = regionprops(Reg, 'BoundingBox', 'FilledImage', 'ConvexImage', 'Area', 'Solidity', 'Circularity', 'Centroid');
         BB = props.BoundingBox;
         C = props.Centroid;
+        
+        Round = props.Circularity > 0.7;
+                
+        if Debug == 1
+            fprintf('Region %d:\n', k, props.Circularity);
+        end
         
         NullThickness = 0.01;
         if (C(1) < NullThickness*Size(1) || C(1) > (1 - NullThickness)*Size(1))
@@ -50,7 +52,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         
          Rectangularity = props.Area / (BB(3)*BB(4));
          
-         if (Rectangularity < 0.5 || Rectangularity > 0.77)
+         if (~Round && (Rectangularity < 0.5 || Rectangularity > 0.77))
             if Debug == 1
                 fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
             end
@@ -84,7 +86,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         convex = regionprops(props.ConvexImage, 'Eccentricity', 'Orientation');
         
         o = abs(convex.Orientation);
-        if (o <= 15)
+        if (~Round && o <= 15)
             if Debug == 1
                 fprintf('Object failed Orientation -> %f\n', convex.Orientation);
             end
@@ -92,7 +94,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
 
-        if (filled.Eccentricity <= 0.6 || filled.Eccentricity >= 0.92)
+        if (~Round && (filled.Eccentricity <= 0.6 || filled.Eccentricity >= 0.92))
             if Debug == 1
                 fprintf('Object failed Eccentricity -> %f\n', filled.Eccentricity);
             end
@@ -100,7 +102,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
         
-        if (abs(filled.Eccentricity - convex.Eccentricity) > 0.1)
+        if (~Round && (abs(filled.Eccentricity - convex.Eccentricity) > 0.1))
             if Debug == 1
                 fprintf('Object failed absolute Eccentricity -> %f\n', abs(filled.Eccentricity - convex.Eccentricity));
             end
