@@ -62,8 +62,11 @@ KOut = zeros(size(R));
 for i = 1 : N
     Reg = (L == i);
     Avg = mean(Centers(i, :));
+    
+%     fprintf('Region %d -> average = %f\n', i, Avg);
+%     figure, imshow(Reg, []);
 
-    if Avg < 80 || Avg > 220
+    if Avg < 80 || Avg > 215
         KOut = KOut | Reg;
     end
 end
@@ -115,16 +118,14 @@ MaskRGB2 = (R2 > 190) & (G2 > 190) & (B2 > 170) & (imabsdiff(R2,G2) <= 35); % & 
 
 MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069) & (Cr >= -1.005 * double(Cb) + 234.5652) & (Cr <= -1.15 * double(Cb) + 301.75) & (Cr <= -2.2857 * double(Cb) + 432.85);
 
-MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr;
+MaskSkin = (MaskRGB | MaskRGB2); %& MaskYCbCr;
 
 if ShowPlots == 1
-%     figure;
     
     subplot(3, 4, 6), imshow(MaskRGB | MaskRGB2), title('MaskRGB | MaskRGB2');
     subplot(3, 4, 7), imshow(MaskYCbCr), title('MaskYCbCr');
     subplot(3, 4, 8), imshow(MaskSkin), title('MaskSkin');
     
-%     figure;
     
     R2 = RGBOriginal(:,:,1);
     G2 = RGBOriginal(:,:,2);
@@ -252,17 +253,9 @@ end
 FN = length(FN) - nnz(FN);
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 
-for j = 1 : TP
-   True_P = True_P +1; 
-end
-
-for j = 1 : FP
-   False_P = False_P +1; 
-end
-
-for j = 1 : FN
-   False_N = False_N +1; 
-end
+True_P = True_P + TP; 
+False_P = False_P + FP; 
+False_N = False_N + FN; 
 
 end
 
