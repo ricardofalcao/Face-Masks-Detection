@@ -13,7 +13,7 @@ RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
 if ShowPlots == 1
     figure;
     
-    subplot(2, 4, 1), imshow(RGBOriginal, 'InitialMagnification', 'fit'), title('Original');
+    subplot(3, 4, 1), imshow(RGBOriginal, 'InitialMagnification', 'fit'), title('Original');
 end
 
 %% Fase 1 - Pre processing (Gaussian filter)
@@ -22,7 +22,7 @@ RGB = imgaussfilt(RGBOriginal, 5);
 Gray = rgb2gray(RGB);
 
 if ShowPlots == 1
-    subplot(2, 4, 2), imshow(RGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
+    subplot(3, 4, 2), imshow(RGB, 'InitialMagnification', 'fit'), title('Gaussian filter');
 end
 
 %Isolate R. 
@@ -43,7 +43,7 @@ b = B * (K / mean(B(:))) ;
 RGBNormal = cat(3, r, g, b);
 
 if ShowPlots == 1
-    subplot(2, 4, 3), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Compensation');
+    subplot(3, 4, 3), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Compensation');
 end
 
 %% Remove Trash
@@ -65,7 +65,7 @@ for i = 1 : N
 end
 
 if ShowPlots == 1
-    subplot(2, 4, 5), imshow(KOut, [], 'InitialMagnification', 'fit'), title('Trash');
+    subplot(3, 4, 4), imshow(KOut, [], 'InitialMagnification', 'fit'), title('Trash');
 end
 
 R2 = I(:,:,1);
@@ -79,7 +79,7 @@ B2(KOut==1) = 0;
 RGBNormal = cat(3, R2, G2, B2);
  
 if ShowPlots == 1
-    subplot(2, 4, 6), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
+    subplot(3, 4, 5), imshow(RGBNormal, [], 'InitialMagnification', 'fit'), title('Trash Removed');
 end
 
 
@@ -114,13 +114,13 @@ MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069)
 MaskSkin = (MaskRGB | MaskRGB2) & MaskYCbCr;
 
 if ShowPlots == 1
-    figure;
+%     figure;
     
-    subplot(1, 4, 1), imshow(MaskRGB | MaskRGB2);
-    subplot(1, 4, 2), imshow(MaskYCbCr);
-    subplot(1, 4, 4), imshow(MaskSkin);
+    subplot(3, 4, 6), imshow(MaskRGB | MaskRGB2), title('MaskRGB | MaskRGB2');
+    subplot(3, 4, 7), imshow(MaskYCbCr), title('MaskYCbCr');
+    subplot(3, 4, 8), imshow(MaskSkin), title('MaskSkin');
     
-    figure;
+%     figure;
     
     R2 = RGBOriginal(:,:,1);
     G2 = RGBOriginal(:,:,2);
@@ -131,11 +131,15 @@ if ShowPlots == 1
     B2(MaskSkin==0) = 0;
     Pele = cat(3, R2, G2, B2);
     
-    % subplot(2, 6, 6), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
+    subplot(3, 4, 9), imshow(Pele, [], 'InitialMagnification', 'fit'), title('Pele');
 end
 
 if ShowPlots == 1
-    subplot(2, 4, 7), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+    subplot(3, 4, 10), imshow(bwlabel(MaskSkin), [], 'InitialMagnification', 'fit'), title('Mask - Pele');
+end
+
+if ShowPlots == 1
+    subplot(3, 4, 11), imshow((MaskYCbCr & ~KOut), [], 'InitialMagnification', 'fit'), title('MaskYCbCr & ~KOut');
 end
 
 MaskSkin = imclose(MaskSkin, strel('disk', 10));

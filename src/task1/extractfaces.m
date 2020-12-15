@@ -115,10 +115,10 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
            
         end
         
-        if Debug == 1
+%         if Debug == 1
             fprintf('Object has Orientation = %f, Eccentricity = %f, Convex.Eccentricity = %f, WHRatio = %f, Area = %f\n', convex.Orientation, filled.Eccentricity, convex.Eccentricity, WHRatio, props.Area);
             fprintf('Object has Solidity = %f, Rectangularity = %f\n', props.Solidity, Rectangularity);
-        end
+%         end
         
         BB_BW = zeros(size(L));
 
