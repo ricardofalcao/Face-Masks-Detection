@@ -1,6 +1,6 @@
 function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
-    Debug = 1;
-    TP_info = 1;
+    Debug = 0;
+    TP_info = 0;
     
     new_maxArea = maxArea;
     
@@ -50,7 +50,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
         
          Rectangularity = props.Area / (BB(3)*BB(4));
          
-         if (Rectangularity < 0.45 || Rectangularity > 0.77)
+         if (Rectangularity < 0.5 || Rectangularity > 0.77)
             if Debug == 1
                 fprintf('Object failed Rectangularity -> %f\n', Rectangularity);
             end
@@ -58,7 +58,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end          
         
-        if (props.Area < 5000 || props.Area > 365000)
+        if (props.Area < 5100 || props.Area > 365000)
             if Debug == 1
                 fprintf('Object failed Area -> %f\n', props.Area);
             end
@@ -72,7 +72,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
 
         WHRatio = BB(3) / BB(4);
         
-        if (WHRatio < 0.55 || WHRatio > 1.2)
+        if (WHRatio < 0.45 || WHRatio > 1.2)
             if Debug == 1
                 fprintf('Object failed Width to Height Ratio -> %f\n', WHRatio);
             end
@@ -92,7 +92,7 @@ function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
             continue;
         end
 
-        if (filled.Eccentricity <= 0.6 || filled.Eccentricity >= 0.9)
+        if (filled.Eccentricity <= 0.6 || filled.Eccentricity >= 0.92)
             if Debug == 1
                 fprintf('Object failed Eccentricity -> %f\n', filled.Eccentricity);
             end

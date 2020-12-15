@@ -4,13 +4,13 @@ clear;
 GT_Store = load('data/ground_truth.mat');
 GT_Array = GT_Store.ground_truth_store;
 
-ShowPlots = 1;
+ShowPlots = 0;
 
 True_P = 0;
 False_P = 0;
 False_N = 0;
 
-for ImageIndex = 20 : 20
+for ImageIndex = 1 : 20
     
 RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -150,7 +150,7 @@ if ShowPlots == 1
 end
 
 % MaskSkin = imclose(Correction, strel('disk', 10));
-MaskSkin = imclose(MaskSkin, strel('disk', 10));
+MaskSkin = imclose(MaskSkin, strel('disk', 12));
 MaskSkin = imfill(MaskSkin, 'holes');
 MaskSkin = purgesmallregions(MaskSkin, 0.4);
 
@@ -225,18 +225,26 @@ for i = 0 : 8
             FP = FP + 1;
         end
     end
-
+  
+    Test = Y;
+    Test(~Mask) = 0;
+    
+    EdgeBig = edge(Test, 'Canny', [], 10);
+    Edge = imclose(EdgeBig, strel('disk', 30));
+    Edge = imfill(Edge, 'holes');
+    
+    Mask = Mask & Edge;
     
     Test = Y;
-    Test(~Mask) = 0;  
+    Test(~Mask) = 0;
 
     EdgeSmall = edge(Test, 'Canny', []);
-    Edge = imclose(EdgeSmall, strel('disk', 5));
+    Edge = imclose(EdgeSmall, strel('disk', 3));
     
     Mask = Mask & ~Edge;
     
     Mask = imfill(Mask, 'holes');
-    Mask = imerode(Mask, strel('disk', 5));
+    Mask = imerode(Mask, strel('disk', 2));
     
     Mask = purgesmallregions(Mask, 0.75);
     
