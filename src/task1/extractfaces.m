@@ -1,4 +1,4 @@
-function [BBx, NBB, New_BW, L, new_maxArea] = extractfaces(BW, maxArea)
+function [BBx, NBB, New_BW, new_maxArea] = extractfaces(BW, maxArea)
     Debug = 0;
     TP_info = 0;
     
