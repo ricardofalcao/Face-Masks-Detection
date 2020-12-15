@@ -1,9 +1,10 @@
 function task2
+    
     global img_index i
     
     confusion_matrix = zeros(3,3);
     
-    for img_index = 1:30
+    for img_index = 1:10
     
         file_name = sprintf('data/%d.png', img_index);
         original = uint8(imread(file_name));
@@ -39,20 +40,25 @@ function task2
         end
     end
     
-	% Print results
+	% Print results and debug
     confusion_matrix
-    
 end
 
 function out_string = algorithm(img_rgb)
+    global i
     
     with_mask = 0;
     bad_mask = 0;
     
     % Convex Hull
-    mask = face_mask(img_rgb);
-%     ch_objects = bwconvhull(face_mask, 'objects');
-
+    mask = face_mask_2(img_rgb);
+    ch_objects = bwconvhull(mask, 'objects');
+    
+%     figure(i); clf(i);
+%     subplot(1,3,1), imshow(img_rgb)
+%     subplot(1,3,2), imshow(mask)
+%     subplot(1,3,3), imshow(face_mask_2(img_rgb))
+%     
     if detect_lips(img_rgb, mask) == 1
         with_mask = 0;    
     elseif detect_lips(img_rgb, mask) == 0
@@ -100,8 +106,8 @@ function [Out] = hsuLipsMethod(img_rgb, mask)
     end
     % Result
     Out = cr_square .* ( ( cr_square - niu * cr_cb_div) .^ 2 ); 
-%     Out = imtophat(Out, strel('disk', 11));
-%     Out = imdilate(Out, strel('disk', 3));
+    Out = imtophat(Out, strel('disk', 11));
+    Out = imdilate(Out, strel('disk', 3));
     Out = Out .* mask;
     Out = Out ./ max(max(Out));
 
@@ -175,18 +181,23 @@ function detected = detect_lips(img_rgb, mask)
     
     if size(thresh_stats, 1) == 1
          if thresh_stats.Orientation < 45 && thresh_stats.Orientation > -45
-                 if thresh_stats.Eccentricity < 0.9
-                     if thresh_stats.Centroid(2) > 0.1 * size(img, 2) && thresh_stats.Centroid(2) < 0.9 * size(img, 2)
-                         if thresh_stats.Centroid(1) > 0.1 * size(half, 1) && thresh_stats.Centroid(1) < 0.9 * size(half, 1)
-                             lips = 1;
-                         end
+            if thresh_stats.Circularity > 0.8 && thresh_stats.Circularity < 1.2
+                 if thresh_stats.Centroid(1) > 0.1 * size(img, 2) && thresh_stats.Centroid(1) < 0.9 * size(img, 2)
+                     if thresh_stats.Centroid(2) > 0.1 * size(half, 1) && thresh_stats.Centroid(2) < 0.9 * size(half, 1)
+                         lips = 1;
                      end
                  end
+            end
          end
     end
     
     fprintf('Img %d | Face %d -> Lips = %d\n', img_index, i, lips);
     
+%     Debug
+%     figure(2); clf(2);
+%     subplot(1,2,1), imshow(thresh), title('thresh')
+%     subplot(1,2,2), imshow(label2rgb(bwlabel(thresh))), title('regions')    
+%     
     % Return bool [0 = not found; 1 = found]
     detected = lips;
 end
@@ -221,7 +232,7 @@ function detected = detect_noses(img_rgb, mask)
         
         if (vertical_h(n) == 0)
             if(maximo_ver > 0)
-                maximos_ver = [maximos_ver;maximo_ver_cord];
+                maximos_ver = [maximos_ver; maximo_ver_cord];
                 n_maximos_ver = n_maximos_ver + 1;
             end
             maximo_ver = 0;

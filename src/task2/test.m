@@ -1,7 +1,7 @@
 function test
    global img_index
    
-   for img_index = 9
+   for img_index = 1:10
        mainLoop(img_index);
    end
 end
