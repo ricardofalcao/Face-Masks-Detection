@@ -19,6 +19,9 @@ RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
 GT = GT_Array(ImageIndex).ground_truth;
 
 [BBx, NBB, TP, FP, FN] = task1(RGBOriginal, GT);
+for i = 1:NBB
+    figure, imshow(BBx(:,:,i));
+end
 
 fprintf("[%d] - TP: %d | FP: %d | FN: %d\n", ImageIndex, TP, FP, FN);
 

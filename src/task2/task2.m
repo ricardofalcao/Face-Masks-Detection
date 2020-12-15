@@ -219,7 +219,7 @@ function detected = detect_noses(img_rgb, mask)
     vertical_h = sum(final_img, 2);
     horizontal_h = sum(final_img, 1);
     
-    %%%%%%DESCOBRINDO MAXIMOS DA PROJEÇAO VERTICAL%%%%%%
+    %%%%%%DESCOBRINDO MAXIMOS DA PROJEï¿½AO VERTICAL%%%%%%
     n_ver = size(vertical_h);
     
     maximo_ver = vertical_h(1);   
@@ -242,7 +242,7 @@ function detected = detect_noses(img_rgb, mask)
         end
     end  
     
-    %%%%%%DESCOBRINDO MAXIMOS DA PROJEÇAO HORIZONTAL%%%%%%
+    %%%%%%DESCOBRINDO MAXIMOS DA PROJEï¿½AO HORIZONTAL%%%%%%
     n_hor = size(horizontal_h);
     
     maximo_hor = horizontal_h(1);
