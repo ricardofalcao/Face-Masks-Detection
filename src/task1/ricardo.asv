@@ -4,13 +4,13 @@ clear;
 GT_Store = load('data/ground_truth.mat');
 GT_Array = GT_Store.ground_truth_store;
 
-ShowPlots = 1;
+ShowPlots = 0;
 
 True_P = 0;
 False_P = 0;
 False_N = 0;
 
-for ImageIndex = 1 : 1
+for ImageIndex = 1 : 30
     
 RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -267,7 +267,5 @@ end
 end
 
 Recall = True_P / (True_P + False_N);
-fprintf('Recall = %f\n', Recall);
 
-Precision = True_P / (True_P + False_P);
-fprintf('Precision = %f\n', Precision);
+Precision = 
