@@ -15,7 +15,7 @@ All = 1:15;
 
 confusion_matrix = zeros(3,3);
 
-for ImageIndex = 1:1
+for ImageIndex = All
     
     RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
     GT1 = GT_Array(ImageIndex).ground_truth;
@@ -30,8 +30,15 @@ for ImageIndex = 1:1
     False_N = False_N + FN; 
 
     for j = 1:NBB
-        Face = BBx(j);
-        mask_string = string(algorithm(Face));
+        BB = BBx(j);
+        FaceMask = cat(3, BB, BB, BB);
+        
+        Face = RGBOriginal;
+        Face(~FaceMask) = 0;
+        
+        Face = imcrop(Face,[BB(1) BB(2) (BB(1)+BB(3)-1) (BB(2)+BB(4)-1)]);
+        
+        mask_string = string(algorithm(Face, j));
         possible_masks = ["without_mask", "with_mask", "mask_weared_incorrect"];
         fprintf('%d %s %s\n', j, GT2(j), mask_string);
 
