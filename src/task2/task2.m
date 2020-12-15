@@ -1,10 +1,8 @@
 function task2
-    
-    global img_index i
-    
+       
     confusion_matrix = zeros(3,3);
     
-    for img_index = 1
+    for img_index = 1:10
     
         file_name = sprintf('data/%d.png', img_index);
         original = uint8(imread(file_name));
@@ -22,7 +20,7 @@ function task2
                 end
             end  
             
-            mask_string = string(algorithm(img));
+            mask_string = string(algorithm(img, i));
             possible_masks = ["without_mask", "with_mask", "mask_weared_incorrect"];
             fprintf('%d %s %s\n', i, string(gt_data.ground_truth_store(img_index).mask(i)), mask_string);
             
@@ -44,9 +42,7 @@ function task2
     confusion_matrix
 end
 
-function out_string = algorithm(img_rgb)
-    global i
-    
+function out_string = algorithm(img_rgb, id)
     with_mask = 0;
     bad_mask = 0;
     
@@ -54,16 +50,12 @@ function out_string = algorithm(img_rgb)
     mask = face_mask_2(img_rgb);
     ch_objects = bwconvhull(mask, 'objects');
     
-%     figure(i); clf(i);
-%     subplot(1,3,1), imshow(img_rgb)
-%     subplot(1,3,2), imshow(mask)
-%     subplot(1,3,3), imshow(face_mask_2(img_rgb))
-%     
-    if detect_lips(img_rgb, mask) == 1
+    % Mask Detection Algorithm
+    if detect_lips(img_rgb, mask, id) == 1
         with_mask = 0;    
-    elseif detect_lips(img_rgb, mask) == 0
+    elseif detect_lips(img_rgb, mask, id) == 0
         with_mask = 1;
-         if detect_noses(img_rgb, mask) == 1
+         if detect_noses(img_rgb, mask, id) == 1
             bad_mask = 1;
          end
     end
@@ -131,28 +123,15 @@ function [Out] = hsuEyesMethod(img_rgb, mask)
     eye_map_y = y_dilated ./ ( y_eroded + 1 );  
     
     % Result
-%     Out = eye_map_c .* eye_map_y;  
-%     Out = imtophat(Out, strel('disk', 11));
-%     Out = imdilate(Out, strel('disk', 2));
-%     Out = imopen(Out, strel('disk', 3));
     Out = eye_map_y;
     Out = imtophat(Out, strel('disk', 11));
     Out = imopen(Out, strel('disk', 3));
     Out = Out .* mask; % Mask to only output the face ROI
     Out = Out ./ max(max(Out));
-    
-    % Debug
-    figure
-    subplot(2,2,1), imshow(img_rgb), title('Input Image')
-    subplot(2,2,2), imshow(eye_map_c, []), title('Eye Map C')
-    subplot(2,2,3), imshow(eye_map_y, []), title('Eye Map Y')
-    subplot(2,2,4), imshow(Out, []), title('Output Image')
-
 end
 
-function detected = detect_lips(img_rgb, mask)
-    global i img_index
-    
+function detected = detect_lips(img_rgb, mask, id)
+   
     img = hsuLipsMethod(img_rgb, mask);
     img = im2double(img);
     half = img(floor((size(img, 1)/2)) : end,:); 
@@ -177,32 +156,24 @@ function detected = detect_lips(img_rgb, mask)
     thresh_stats = regionprops(logical(bwlabel(thresh)), 'all');
     
     % Algorithm
-    lips = 0;
+    detected = 0;
     
     if size(thresh_stats, 1) == 1
          if thresh_stats.Orientation < 45 && thresh_stats.Orientation > -45
             if thresh_stats.Circularity > 0.8 && thresh_stats.Circularity < 1.2
                  if thresh_stats.Centroid(1) > 0.1 * size(img, 2) && thresh_stats.Centroid(1) < 0.9 * size(img, 2)
                      if thresh_stats.Centroid(2) > 0.1 * size(half, 1) && thresh_stats.Centroid(2) < 0.9 * size(half, 1)
-                         lips = 1;
+                         detected = 1;
                      end
                  end
             end
          end
     end
     
-    fprintf('Img %d | Face %d -> Lips = %d\n', img_index, i, lips);
-    
-%     Debug
-%     figure(2); clf(2);
-%     subplot(1,3,1), imshow(thresh), title('thresh')
-%     subplot(1,3,2), imshow(label2rgb(bwlabel(thresh))), title('regions')    
-    % Return bool [0 = not found; 1 = found]
-    detected = lips;
+    fprintf('Img %d | Lips = %d\n',id , detected);
 end
 
-function detected = detect_noses(img_rgb, mask)
-    global i img_index
+function detected = detect_noses(img_rgb, mask, id)
 
     lips = hsuLipsMethod(img_rgb, mask);
     eyes = hsuEyesMethod(img_rgb, mask);
@@ -254,7 +225,7 @@ function detected = detect_noses(img_rgb, mask)
         
         if (horizontal_h(n) == 0)
             if(maximo_hor > 0)
-                maximos_hor = [maximos_hor;maximo_hor_cord];
+                maximos_hor = [maximos_hor; maximo_hor_cord];
                 n_maximos_hor = n_maximos_hor + 1;
             end
             maximo_hor = 0;
@@ -275,19 +246,11 @@ function detected = detect_noses(img_rgb, mask)
     end
 
     if(detetado == 1)
-        fprintf('Img %d | Face %d -> Nose = %d\n', img_index, i, detetado);
+        fprintf('Img %d -> Nose = %d\n', id, detetado);
     else
-        fprintf('Img %d | Face %d -> Nose = %d\n', img_index, i, detetado);
+        fprintf('Img %d -> Nose = %d\n', id, detetado);
     end
     
     detected = detetado;
     
-%     figure;
-%     subplot(1,2,1);plot(vertical_h); title('vertical');
-%     subplot(1,2,2);plot(horizontal_h); title('horizontal');
-%    
-%     figure; clf;
-%     subplot(2,2,1), imshow(eyes), title('Eyes')
-%     subplot(2,2,2), imshow(lips), title('Lips')
-%     subplot(2,2,3), imshow(final_img), title('final')
 end
