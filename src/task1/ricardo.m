@@ -10,7 +10,7 @@ True_P = 0;
 False_P = 0;
 False_N = 0;
 
-for ImageIndex = 1 : 1
+for ImageIndex = 20 : 20
     
 RGBOriginal = imread(sprintf('data/%d.png', ImageIndex));
      
@@ -63,7 +63,7 @@ for i = 1 : N
     Reg = (L == i);
     Avg = mean(Centers(i, :));
 
-    if Avg < 80
+    if Avg < 80 || Avg > 220
         KOut = KOut | Reg;
     end
 end
@@ -110,8 +110,8 @@ R2 = I(:,:,1);
 G2 = I(:,:,2);
 B2 = I(:,:,3);
 
-MaskRGB = (R2 > 95) & (G2 > 40) & (B2 > 20) & ((max(max(R2,G2), B2) - min(min(R2,G2), B2)) > 15) & (imabsdiff(R2, G2) > 15)  & (R2 > G2) & (R2 > B2);
-MaskRGB2 = (R2 > 220) & (G2 > 210) & (B2 > 170) & (imabsdiff(R2,G2) <= 15) & (R2 > B2) & (G2 > B2);
+MaskRGB = (R2 > 95) & (G2 > 40) & (B2 > 20) & ((max(max(R2,G2), B2) - min(min(R2,G2), B2)) > 10) & (imabsdiff(R2, G2) > 10)  & (R2 > G2) & (R2 > B2);
+MaskRGB2 = (R2 > 190) & (G2 > 190) & (B2 > 170) & (imabsdiff(R2,G2) <= 35); % & (R2 > B2) & (G2 > B2);
 
 MaskYCbCr = (Cr <= 1.5862*double(Cb) + 20) & (Cr >= 0.3448*double(Cb) + 76.2069) & (Cr >= -1.005 * double(Cb) + 234.5652) & (Cr <= -1.15 * double(Cb) + 301.75) & (Cr <= -2.2857 * double(Cb) + 432.85);
 
