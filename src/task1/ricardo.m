@@ -4,7 +4,7 @@ clear;
 GT_Store = load('data/ground_truth.mat');
 GT_Array = GT_Store.ground_truth_store;
 
-ShowPlots = 1;
+ShowPlots = 0;
 
 True_P = 0;
 False_P = 0;
@@ -150,7 +150,7 @@ if ShowPlots == 1
 end
 
 % MaskSkin = imclose(Correction, strel('disk', 10));
-MaskSkin = imclose(MaskSkin, strel('disk', 10));
+MaskSkin = imclose(MaskSkin, strel('disk', 12));
 MaskSkin = imfill(MaskSkin, 'holes');
 MaskSkin = purgesmallregions(MaskSkin, 0.4);
 
@@ -193,60 +193,68 @@ FN = zeros(GT_Len);
 
 maxArea = 0;
 
-% for i = 0 : 8
-%     if ShowPlots == 1
-%         fprintf("Iteration %d\n", i+1);
-% %         subplot(2, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
-%     end
-%     
-%     [BB1, NFaces, Mask, L, new_maxArea] = extractfaces(Mask, maxArea);
-%     maxArea = new_maxArea;
-% 
-%     for j = 1 : NFaces
-%         Face = BB1(:,:,j);
-%         Aux = cat(3, uint8(Face) * 255, zeros(size(Face)), zeros(size(Face)));
-%         ImgRGB_BB = imadd(ImgRGB_BB, Aux);
-%         
-%         JMax = -1;
-%         JMaxI = 0;
-%         
-%         for k = 1 : GT_Len
-%             JN = jaccard(Face, squeeze(GT_BW(k,:,:)));
-%             
-%             if JN > JMax
-%                 JMax = JN;
-%                 JMaxI = k;
-%             end
-%         end
-%         
-%         FN(JMaxI) = 1;
-%         
-%         if JMax >= 0.3
-%             TP = TP + 1;
-%         else
-%             FP = FP + 1;
-%         end
-%     end
-% 
-%     
-%     Test = Y;
-%     Test(~Mask) = 0;  
-% 
-%     EdgeSmall = edge(Test, 'Canny', []);
-%     Edge = imclose(EdgeSmall, strel('disk', 5));
-%     
-%     Mask = Mask & ~Edge;
-%     
-%     Mask = imfill(Mask, 'holes');
-%     Mask = imerode(Mask, strel('disk', 5));
-%     
-%     Mask = purgesmallregions(Mask, 0.75);
-%     
-%     if ShowPlots == 1
-%         fprintf("\n");
-%     end
-%     
-% end
+for i = 0 : 8
+    if ShowPlots == 1
+        fprintf("Iteration %d\n", i+1);
+        subplot(2, 5, i + 1), imshow(Mask,[], 'InitialMagnification', 'fit'), title('Mask - Extract faces');
+    end
+    
+    [BB1, NFaces, Mask, L, new_maxArea] = extractfaces(Mask, maxArea);
+    maxArea = new_maxArea;
+
+    for j = 1 : NFaces
+        Face = BB1(:,:,j);
+        Aux = cat(3, uint8(Face) * 255, zeros(size(Face)), zeros(size(Face)));
+        ImgRGB_BB = imadd(ImgRGB_BB, Aux);
+        
+        JMax = -1;
+        JMaxI = 0;
+        
+        for k = 1 : GT_Len
+            JN = jaccard(Face, squeeze(GT_BW(k,:,:)));
+            
+            if JN > JMax
+                JMax = JN;
+                JMaxI = k;
+            end
+        end
+        
+        FN(JMaxI) = 1;
+        
+        if JMax >= 0.3
+            TP = TP + 1;
+        else
+            FP = FP + 1;
+        end
+    end
+  
+    Test = Y;
+    Test(~Mask) = 0;
+    
+    EdgeBig = edge(Test, 'Canny', [], 10);
+    Edge = imclose(EdgeBig, strel('disk', 30));
+    Edge = imfill(Edge, 'holes');
+    
+    Mask = Mask & Edge;
+    
+    Test = Y;
+    Test(~Mask) = 0;
+
+    EdgeSmall = edge(Test, 'Canny', []);
+    Edge = imclose(EdgeSmall, strel('disk', 3));
+    
+    Mask = Mask & ~Edge;
+    
+    Mask = imfill(Mask, 'holes');
+    Mask = imerode(Mask, strel('disk', 2));
+    
+    Mask = purgesmallregions(Mask, 0.75);
+    
+    if ShowPlots == 1
+        fprintf("\n");
+    end
+    
+end
 
 if ShowPlots == 1
 %     subplot(2, 5, 10), imshow(ImgRGB_BB, 'InitialMagnification', 'fit'), title('Face');
