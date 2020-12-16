@@ -193,64 +193,63 @@ function detected = detect_noses(img_rgb, mask, id)
     %%%%%%DESCOBRINDO MAXIMOS DA PROJE�AO VERTICAL%%%%%%
     n_ver = size(vertical_h);
     
-    maximo_ver = vertical_h(1);   
-    maximo_ver_cord = 1;
-    maximos_ver = [];
+    maximum_ver = vertical_h(1);   
+    maximum_ver_cord = 1;
+    maximums_ver = [];
     
-    n_maximos_ver = 0;
+    n_maximums_ver = 0;
     for n = 2:n_ver(1,:)
         
         if (vertical_h(n) == 0)
-            if(maximo_ver > 0)
-                maximos_ver = [maximos_ver; maximo_ver_cord];
-                n_maximos_ver = n_maximos_ver + 1;
+            if(maximum_ver > 0)
+                maximums_ver = [maximums_ver; maximum_ver_cord];
+                n_maximums_ver = n_maximums_ver + 1;
             end
-            maximo_ver = 0;
+            maximum_ver = 0;
             
-        elseif((vertical_h(n) > maximo_ver))
-            maximo_ver = vertical_h(n);
-            maximo_ver_cord = n;
+        elseif((vertical_h(n) > maximum_ver))
+            maximum_ver = vertical_h(n);
+            maximum_ver_cord = n;
         end
     end  
     
     %%%%%%DESCOBRINDO MAXIMOS DA PROJE�AO HORIZONTAL%%%%%%
     n_hor = size(horizontal_h);
     
-    maximo_hor = horizontal_h(1);
-    maximo_hor_cord = 1;
-    maximos_hor = [];
+    maximum_hor = horizontal_h(1);
+    maximum_hor_cord = 1;
+    maximums_hor = [];
     
-    n_maximos_hor = 0;
+    n_maximums_hor = 0;
     for n = 2:n_hor(:,2)
         
         if (horizontal_h(n) == 0)
-            if(maximo_hor > 0)
-                maximos_hor = [maximos_hor; maximo_hor_cord];
-                n_maximos_hor = n_maximos_hor + 1;
+            if(maximum_hor > 0)
+                maximum_hor = [maximums_hor; maximum_hor_cord];
+                n_maximums_hor = n_maximums_hor + 1;
             end
-            maximo_hor = 0;
+            maximum_hor = 0;
             
-        elseif((horizontal_h(n) > maximo_hor))
-            maximo_hor = horizontal_h(n);
-            maximo_hor_cord = n;
+        elseif((horizontal_h(n) > maximum_hor))
+            maximum_hor = horizontal_h(n);
+            maximum_hor_cord = n;
         end
     end
     
     %%%%%%DETETAR NARIZ%%%%%%%
-    detetado = 0;
+    detected = 0;
     for n=1:n_maximos_ver
         
        if((maximos_ver(n) > 0.38 * n_ver(1)) && (maximos_ver(n) < 0.55 * n_ver(1)))
-           detetado = 1;       
+           detected = 1;       
         end
     end
 
-    if(detetado == 1)
-        fprintf('Img %d -> Nose = %d\n', id, detetado);
+    if(detected == 1)
+        fprintf('Img %d -> Nose = %d\n', id, detected);
     else
-        fprintf('Img %d -> Nose = %d\n', id, detetado);
+        fprintf('Img %d -> Nose = %d\n', id, detected);
     end
     
-    detected = detetado;
     
 end
