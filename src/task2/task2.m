@@ -175,15 +175,16 @@ end
 
 function detected = detect_noses(img_rgb, mask, id)
 
-    lips = hsuLipsMethod(img_rgb, mask);
+    %lips = hsuLipsMethod(img_rgb, mask);
     eyes = hsuEyesMethod(img_rgb, mask);
     
-    [L, C] = size(lips);  
+    %[L, C] = size(lips);  
     
-    top_half = eyes(1: floor(0.5 * L) , 1:C);
-    bottom_half = lips(floor(L/2):L, 1:C);
+    %top_half = eyes(1: floor(0.5 * L) , 1:C);
+    %bottom_half = lips(floor(L/2):L, 1:C);
     
-    final_img = [top_half; bottom_half];
+    %final_img = [top_half; bottom_half];
+    final_img = eyes;
     final_img = imbinarize(final_img, 0.6);
     
     %%%%Initializing projection%%%%%%%
@@ -238,9 +239,9 @@ function detected = detect_noses(img_rgb, mask, id)
     
     %%%%%%DETETAR NARIZ%%%%%%%
     detected = 0;
-    for n=1:n_maximos_ver
+    for n=1:n_maximums_ver
         
-       if((maximos_ver(n) > 0.38 * n_ver(1)) && (maximos_ver(n) < 0.55 * n_ver(1)))
+       if((maximums_ver(n) > 0.38 * n_ver(1)) && (maximums_ver(n) < 0.55 * n_ver(1)))
            detected = 1;       
         end
     end
