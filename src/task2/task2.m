@@ -2,7 +2,8 @@ function task2
        
     confusion_matrix = zeros(3,3);
     
-    for img_index = 1:10
+    % To test the entire Ground Truth please insert 1:30
+    for img_index = 1:30
     
         file_name = sprintf('data/%d.png', img_index);
         original = uint8(imread(file_name));
@@ -20,9 +21,9 @@ function task2
                 end
             end  
             
-            mask_string = string(algorithm(img, i));
+            mask_string = string(algorithm(img, img_index));
             possible_masks = ["without_mask", "with_mask", "mask_weared_incorrect"];
-            fprintf('%d %s %s\n', i, string(gt_data.ground_truth_store(img_index).mask(i)), mask_string);
+            fprintf('Img %d-%d | GT = %s | Algorithm Output = %s\n', img_index, i, string(gt_data.ground_truth_store(img_index).mask(i)), mask_string);
             
             for n = 1:size(possible_masks, 2)
                 if strcmp(string(gt_data.ground_truth_store(img_index).mask(i)), possible_masks(n)) == 1
@@ -38,7 +39,7 @@ function task2
         end
     end
     
-	% Print results and debug
+	% Print results
     confusion_matrix
 end
 
@@ -47,7 +48,7 @@ function out_string = algorithm(img_rgb, id)
     bad_mask = 0;
     
     % Convex Hull
-    mask = face_mask_2(img_rgb);
+    mask = face_mask(img_rgb);
     
     % Mask Detection Algorithm
     if detect_lips(img_rgb, mask, id) == 1
@@ -95,6 +96,7 @@ function [Out] = hsuLipsMethod(img_rgb, mask)
     else
         niu = 0;
     end
+    
     % Result
     Out = cr_square .* ( ( cr_square - niu * cr_cb_div) .^ 2 ); 
     Out = imtophat(Out, strel('disk', 11));
@@ -160,29 +162,20 @@ function detected = detect_lips(img_rgb, mask, id)
             end
          end
     end
-    
-    fprintf('Img %d | Lips = %d\n',id , detected);
 end
 
 function detected = detect_noses(img_rgb, mask, id)
 
-    %lips = hsuLipsMethod(img_rgb, mask);
     eyes = hsuEyesMethod(img_rgb, mask);
-    
-    %[L, C] = size(lips);  
-    
-    %top_half = eyes(1: floor(0.5 * L) , 1:C);
-    %bottom_half = lips(floor(L/2):L, 1:C);
-    
-    %final_img = [top_half; bottom_half];
+
     final_img = eyes;
     final_img = imbinarize(final_img, 0.6);
     
-    %%%%Initializing projection%%%%%%%
+    % Projections
     vertical_h = sum(final_img, 2);
     horizontal_h = sum(final_img, 1);
     
-    %%%%%%DESCOBRINDO MAXIMOS DA PROJE�AO VERTICAL%%%%%%
+    % Vertical Projection
     n_ver = size(vertical_h);
     
     maximum_ver = vertical_h(1);   
@@ -205,7 +198,7 @@ function detected = detect_noses(img_rgb, mask, id)
         end
     end  
     
-    %%%%%%DESCOBRINDO MAXIMOS DA PROJE�AO HORIZONTAL%%%%%%
+    % Horizontal Projection
     n_hor = size(horizontal_h);
     
     maximum_hor = horizontal_h(1);
@@ -228,19 +221,14 @@ function detected = detect_noses(img_rgb, mask, id)
         end
     end
     
-    %%%%%%DETETAR NARIZ%%%%%%%
+    % Algorithm
     detected = 0;
+    
     for n=1:n_maximums_ver
         
        if((maximums_ver(n) > 0.38 * n_ver(1)) && (maximums_ver(n) < 0.55 * n_ver(1)))
            detected = 1;       
         end
-    end
-
-    if(detected == 1)
-        fprintf('Img %d -> Nose = %d\n', id, detected);
-    else
-        fprintf('Img %d -> Nose = %d\n', id, detected);
     end
     
     
