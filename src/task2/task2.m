@@ -48,7 +48,6 @@ function out_string = algorithm(img_rgb, id)
     
     % Convex Hull
     mask = face_mask_2(img_rgb);
-    ch_objects = bwconvhull(mask, 'objects');
     
     % Mask Detection Algorithm
     if detect_lips(img_rgb, mask, id) == 1
@@ -108,14 +107,6 @@ function [Out] = hsuEyesMethod(img_rgb, mask)
     
     img_ycbcr = im2double(rgb2ycbcr(img_rgb));
     
-    % Chromo map
-    cb_square = img_ycbcr(:,:,2).^2;
-    cr_square = img_ycbcr(:,:,3).^2;
-    cr_c_square = 1 - cr_square;
-    cb_cr_div = img_ycbcr(:,:,2)./img_ycbcr(:,:,3);
-    eye_map_c = 1/3 * (cb_square + cr_c_square + cb_cr_div);
-    eye_map_c = histeq(eye_map_c);
-
     % Luma map
     y_original = img_ycbcr(:,:,1);
     y_dilated = imdilate(y_original, strel('ball', 7, 1));
